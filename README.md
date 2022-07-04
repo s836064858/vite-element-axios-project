@@ -181,3 +181,26 @@ module.exports = {
 ## UI 框架
 
 [element-ui](https://element-plus.org/#/zh-CN/component/installation)
+
+## VSCode 新建代码片段
+
+1、入口:首选项->配置用户代码片段->新建用户代码片段
+
+2、
+
+```json
+{
+	"vue3-template":{
+		"scope": "vue",
+		"prefix": "<template> vue3-scss.vue",
+		"body": [
+			"<template>\n</template>"
+			"<script setup>\nimport { onMounted, ref } from 'vue'\n\n</script>"
+			"<style lang='scss' scoped>\n\n</style>"
+		],
+		"description": "vue3 javascript sass 模版文件结构"
+	}
+}
+```
+
+3、使用：新建文件输入 `<template> vue3-scss.vue`选择该项即可
