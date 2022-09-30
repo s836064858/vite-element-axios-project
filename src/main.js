@@ -5,9 +5,12 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
 import router from './router'
 
+import Icon from './assets/js/icon'
+
 const app = createApp(App)
 app.use(router)
 app.use(ElementPlus, {
   locale: zhCn,
 })
+app.component('Icon', Icon)
 app.mount('#app')
