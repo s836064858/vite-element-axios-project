@@ -6,7 +6,7 @@
 
 ## axios 请求
 
-1、token 存于 vuex 中（localstorage），拦截请求后将 token 添加进去
+1. token 存于 vuex 中（localstorage），拦截请求后将 token 添加进去
 
 ```js
 /**
@@ -25,7 +25,7 @@ instance.interceptors.request.use(
 )
 ```
 
-2、请求成功后做响应拦截，抛出为`response.data.data`，不包含`code`与`Message`
+2. 请求成功后做响应拦截，抛出为`response.data.data`，不包含`code`与`Message`
 
 ```js
 /**
@@ -55,7 +55,7 @@ instance.interceptors.response.use(
 )
 ```
 
-3、API 调用方法
+3. API 调用方法
 
 （一）统一封装 axios,在 api 文件中定义接口,然后在页面中使用
 
@@ -87,14 +87,14 @@ async function getList() {
 
 ## 生产环境与开发环境区分
 
-1、生产环境，根目录下创建.env.production 文件
+1. 生产环境，根目录下创建.env.production 文件
 
 ```js
 NODE_ENV = 'production'
 VUE_APP_API_URL = 'https://localhost:3000/' //线上地址
 ```
 
-2、开发环境，使用 webpack 中`devServer`进行接口转发，同时可支持跨域
+2. 开发环境，使用 webpack 中`devServer`进行接口转发，同时可支持跨域
 
 ```js
 server: {
@@ -111,9 +111,9 @@ server: {
 
 ## 规范
 
-1、缩进: `空格:2` 在 Vscode 中设置
+1. 缩进: `空格:2` 在 Vscode 中设置
 
-2、eslint 与 vetur 插件配置项采取如下(在 Vscode 中配置文件设置)
+2. eslint 与 vetur 插件配置项采取如下(在 Vscode 中配置文件设置)
 
 \*建议 vscode 添加 eslint，vetur，Prettier - Code formatter
 
@@ -150,7 +150,7 @@ server: {
 }
 ```
 
-3、eslint 常用配置
+3. eslint 常用配置
 
 ```js
 module.exports = {
@@ -170,13 +170,15 @@ module.exports = {
 }
 ```
 
-4、.gitignore 配置（主要忽略.zip、/dist、node_modules、.rar 文件,如有其它另加）
+4. .gitignore 配置（主要忽略.zip、/dist、node_modules、.rar 文件,如有其它另加）
 
-5、css className 单词之间使用-连接，js 变量函数名使用驼峰
+5. css className 单词之间使用-连接，js 变量函数名使用驼峰
 
-6、git 提交使用 fix(修改),feat(新增功能),perf(优化)
+6. git 提交使用 fix(修改),feat(新增功能),perf(优化)
 
-\*使用 commitlint 限制 git 提交 规范例如（fix: ‘message’）
+   \*先允许`npm run prepare`安装husky
+
+   \*使用 commitlint 限制 git 提交 规范例如（fix: ‘message’）
 
 ## UI 框架
 
@@ -184,9 +186,9 @@ module.exports = {
 
 ## VSCode 新建代码片段
 
-1、入口:首选项->配置用户代码片段->新建用户代码片段
+1. 入口:首选项->配置用户代码片段->新建用户代码片段
 
-2、
+2. 
 
 ```json
 {
@@ -203,4 +205,4 @@ module.exports = {
 }
 ```
 
-3、使用：新建文件输入 `<template> vue3-scss.vue`选择该项即可
+3. 使用：新建文件输入 `<template> vue3-scss.vue`选择该项即可
