@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "serve": "vite",
+    "serve": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
     "postinstall": "husky install",
