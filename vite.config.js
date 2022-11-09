@@ -19,6 +19,7 @@ export default defineConfig({
     alias: {
       '@api': resolve(__dirname, '/src/api'),
       '@assets': resolve(__dirname, '/src/assets'),
+      '@components': resolve(__dirname, '/src/components'),
     },
   },
   server: {

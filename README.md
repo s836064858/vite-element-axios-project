@@ -182,7 +182,7 @@ module.exports = {
 
 ## UI 框架
 
-[element-ui](https://element-plus.org/#/zh-CN/component/installation)
+[element-plus](https://element-plus.org/#/zh-CN/component/installation)
 
 ## VSCode 新建代码片段
 

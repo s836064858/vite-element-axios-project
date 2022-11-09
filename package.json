@@ -10,6 +10,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "ali-oss": "^6.17.1",
     "axios": "^0.24.0",
     "element-plus": "^2.2.13",
     "lodash": "^4.17.21",
