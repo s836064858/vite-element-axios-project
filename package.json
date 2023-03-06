@@ -29,6 +29,7 @@
     "lint-staged": "^12.1.4",
     "prettier": "^2.5.1",
     "sass": "^1.45.0",
+    "unplugin-auto-import": "^0.15.1",
     "vite": "^3.0.8",
     "vite-plugin-compression": "^0.5.1"
   },
