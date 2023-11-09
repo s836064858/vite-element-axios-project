@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-12-16 09:18:47
- * @LastEditTime: 2023-07-21 10:59:22
+ * @LastEditTime: 2023-11-09 16:23:20
  * @LastEditors: 荛子
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /vite-element-axios-project/src/views/Home.vue
@@ -56,7 +56,7 @@ function handleChange() {
 </script>
 <style lang="scss" scoped></style> -->
 
-<template>
+<!-- <template>
   <image-upload v-model="imgUrl"></image-upload>
 </template>
 <script setup>
@@ -64,5 +64,14 @@ import { ref } from 'vue'
 import ImageUpload from '@components/ImageUpload.vue'
 
 let imgUrl = ref([])
+</script>
+<style lang="scss" scoped></style> -->
+
+<template>
+  <drag-tree-table></drag-tree-table>
+</template>
+<script setup>
+import { onMounted, ref } from 'vue'
+import DragTreeTable from '@components/dragTreeTable.vue'
 </script>
 <style lang="scss" scoped></style>
