@@ -2,16 +2,18 @@
   <ul class="file-box">
     <li v-for="(item, index) in imageURL" :key="index">
       <div class="file-list">
+        <el-image :src="item" fit="fill" :id="`image-id-${index}`" :preview-teleported="true" :preview-src-list="[item]" style="display: none"></el-image>
         <img :src="item" alt="" />
         <div class="mask">
-          <Icon name="Delete" @click="deleteImg(item)"></Icon>
+          <Icon name="Delete" @click="deleteImg(index)"></Icon>
+          <Icon name="Delete" @click="showPreview(index)"></Icon>
         </div>
       </div>
     </li>
     <li v-if="imageURL.length < props.limit">
       <el-upload
         :auto-upload="false"
-        accept="image/png,image/jpg,image/jpeg"
+        accept="image/png,image/jpg,image/jpeg,.pdf"
         class="drag-upload"
         drag
         action="#"
@@ -96,15 +98,18 @@ function handlePaste(event) {
  * @return {*}
  */
 async function uploadFile(file) {
-  const client = new OSS({
-    accessKeyId: '*',
-    accessKeySecret: '*',
-    endpoint: '*',
-    bucket: '*',
-  })
-  let uploadFileName = file.name.replace(/(\.[a-zA-z0-9]+$)/g, `_${new Date().getTime()}$1`)
-  const res = await client.put(`/folder/${uploadFileName}`, file)
-  if (imageURL.value.length < props.limit) imageURL.value.push(res.url)
+  const res = window.URL.createObjectURL(file)
+  console.log(res)
+  if (imageURL.value.length < props.limit) imageURL.value.push(res)
+  // const client = new OSS({
+  //   accessKeyId: '*',
+  //   accessKeySecret: '*',
+  //   endpoint: '*',
+  //   bucket: '*',
+  // })
+  // let uploadFileName = file.name.replace(/(\.[a-zA-z0-9]+$)/g, `_${new Date().getTime()}$1`)
+  // const res = await client.put(`/folder/${uploadFileName}`, file)
+  // if (imageURL.value.length < props.limit) imageURL.value.push(res.url)
 }
 /**
  * @description: 删除图片
@@ -113,6 +118,10 @@ async function uploadFile(file) {
  */
 function deleteImg(i) {
   imageURL.value.splice(i, 1)
+}
+
+function showPreview(i) {
+  document.querySelector(`#image-id-${i}`).click()
 }
 </script>
 

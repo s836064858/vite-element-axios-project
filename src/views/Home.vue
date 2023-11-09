@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-12-16 09:18:47
- * @LastEditTime: 2023-03-20 13:25:48
+ * @LastEditTime: 2023-07-21 10:59:22
  * @LastEditors: 荛子
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /vite-element-axios-project/src/views/Home.vue
@@ -22,40 +22,47 @@
 // }
 </script> -->
 
-<template>
-  <div style="width: 800px">
-    <FormulaEdit v-model="formulaStr" :fields="fields" :formulaArr="formulaArr"></FormulaEdit>
-    {{ formulaStr }}
-  </div>
+<!-- <template>
+  <lazy-select v-model="selectData" :options="options" placeholder="请选择店铺" @change="handleChange"></lazy-select>
+
 </template>
 <script setup>
-import FormulaEdit from '@components/formulaEdit.vue'
+import { onMounted, ref } from 'vue'
+import lazySelect from '@components/lazySelect.vue'
 
-let formulaStr = ref(null)
-let fields = ref([
+let selectData = ref(null)
+let options = ref([
   {
-    name: '字段1',
-    id: 1,
+    label: '字段1',
+    value: 1,
   },
   {
-    name: '字段2',
-    id: 2,
+    label: '字段2',
+    value: 2,
   },
   {
-    name: '字段3',
-    id: 3,
+    label: '字段3',
+    value: 3,
   },
   {
-    name: '字段4',
-    id: 4,
-  },
-])
-let formulaArr = ref([
-  {
-    id: 1,
-    formula: 'AVERAGE',
-    desc: ['AVERAGE函数可以获取一组数值的算术平均值', '用法：AVERAGE(数字1,数字2)'],
+    label: '字段4',
+    value: 4,
   },
 ])
+
+function handleChange() {
+  console.log('handleChange')
+}
+</script>
+<style lang="scss" scoped></style> -->
+
+<template>
+  <image-upload v-model="imgUrl"></image-upload>
+</template>
+<script setup>
+import { ref } from 'vue'
+import ImageUpload from '@components/ImageUpload.vue'
+
+let imgUrl = ref([])
 </script>
 <style lang="scss" scoped></style>
