@@ -50,12 +50,14 @@ let tableData = ref([
         date: '2016-05-06',
         name: 'wangxiaohu',
         address: 'No. 189, Grove St, Los Angeles',
-      },
-      {
-        id: 33,
-        date: '2016-05-07',
-        name: 'wangxiaohu',
-        address: 'No. 189, Grove St, Los Angeles',
+        children: [
+          {
+            id: 33,
+            date: '2016-05-07',
+            name: 'wangxiaohu',
+            address: 'No. 189, Grove St, Los Angeles',
+          },
+        ],
       },
     ],
   },
@@ -115,80 +117,106 @@ const clearDragAnimation = () => {
   tempRelated && relatedDom.value.removeChild(tempRelated)
   relatedDom.value.classList.remove('son-drag-animation')
 }
-// 表格拖动开始
+/**
+ * 表格拖动开始的处理函数
+ * @param event 事件对象，包含了拖动相关的数据和操作
+ */
 const tableStart = (event) => {
-  // 在Sortable中onMove返回false时，拖动的那个元素不会触发onMove事件，所以手动添加上事件
+  // 当Sortable的onMove事件返回false时，被拖动的元素不会触发onMove事件，这里通过手动添加dragover事件来弥补这一行为
   event.item.addEventListener(
     'dragover',
     throttle(() => {
+      // 如果存在相关的DOM元素，则清除拖动动画，并重置相关DOM元素的值
       if (relatedDom.value) {
         clearDragAnimation()
         relatedDom.value = undefined
       }
-    }, 300)
+    }, 300) // 使用节流函数来限制事件处理函数的执行频率，这里为300ms
   )
 }
-// 表格拖动中 主要处理拖动的动画
+/**
+ * 处理表格拖动时的动画效果。
+ * @param {Event} evt - 触发事件的事件对象。
+ * @param {OriginalEvent} originalEvent - 原始的拖动事件对象。
+ * @returns {boolean} 总是返回false，用于阻止默认行为。
+ */
 const tableMove = (evt, originalEvent) => {
   if (relatedDom.value && !evt.related.isEqualNode(relatedDom.value)) {
-    // 如果替换的dom不一致，则删除原有的效果
+    // 如果当前相关的DOM节点与之前的不同，则清除原有拖动动画，并更新相关DOM
     clearDragAnimation()
     relatedDom.value = evt.related
   } else if (!relatedDom.value) {
+    // 如果还没有相关DOM，则设置当前拖动的DOM为相关DOM
     relatedDom.value = evt.related
   }
+  // 根据拖动时鼠标位置的不同，添加不同的动画效果
   if (originalEvent.offsetY > 2 && originalEvent.offsetY <= 10) {
+    // 如果在目标DOM上方一定区域拖动，添加前置动画效果
     clearDragAnimation()
-    // 替换dom的前面
     const div = document.createElement('div')
     div.className = 'before drag-animation'
     evt.related.appendChild(div)
   } else if (originalEvent.offsetY > 10 && originalEvent.offsetY <= 20) {
+    // 如果在目标DOM内部一定区域拖动，添加子级动画效果
     clearDragAnimation()
-    // 替换dom的子级
     evt.related.classList.add('son-drag-animation')
   } else if (originalEvent.offsetY > 20) {
+    // 如果在目标DOM下方一定区域拖动，添加后置动画效果
     clearDragAnimation()
-    // 替换dom的后面
     const div = document.createElement('div')
     div.className = 'after drag-animation'
     evt.related.appendChild(div)
   }
-  return false
+  return false // 阻止默认行为
 }
-// 表格拖动结束 主要处理拖动后表格的数据变化
+/**
+ * 表格拖动结束时的处理函数，主要负责处理拖动后表格的数据变化。
+ * 该函数不接受任何参数，也不返回任何值。
+ */
 const tableEnd = () => {
+  // 初始化请求对象，用于记录拖动相关的信息
   let tempRequest = {
-    DragID: dragID.value,
-    DropID: 0,
-    DropType: '',
+    DragID: dragID.value, // 被拖动项的ID
+    DropID: 0, // 目标放置项的ID，默认为0
+    DropType: '', // 拖入方式，默认为空
   }
 
+  // 将表格数据转换为数组形式，便于处理
   const oneArray = treetoarray(taskTableRef.value?.data || [])
+
+  // 判断是否有相关DOM元素被拖动
   if (relatedDom.value) {
+    // 获取临时相关DOM元素，并判断是否为子元素拖动
     const tempRelated = relatedDom.value.querySelector('.drag-animation')
     const isChild = relatedDom.value.className.includes('son-drag-animation')
-    // 获取拖入方式
+
+    // 根据拖动的相关DOM元素，确定拖入的方式（before、after或inner）
     if (tempRelated) {
       tempRequest.DropType = Array.from(tempRelated.classList).includes('before') ? 'before' : 'after'
     } else if (isChild) {
       tempRequest.DropType = 'inner'
     }
-    // 获取拖入的ID
+
+    // 从相关DOM元素的类名中获取拖入的ID
     relatedDom.value?.classList.forEach((item) => {
       if (item.includes('drag-class')) {
         tempRequest.DropID = Number(item.split('drag-class-')[1])
       }
     })
+
+    // 打印拖动的相关信息
     console.log(`DragID:${tempRequest.DragID},DropID:${tempRequest.DropID},DropType:${tempRequest.DropType}`)
-    // 获取拖动的下标
+
+    // 获取拖动项和拖入项在数组中的索引及其数据
     const dragIndex = oneArray.findIndex((item) => item.id === tempRequest.DragID)
     const dragData = oneArray.find((item) => item.id === tempRequest.DragID)
-    // 获取拖入的下标
     const dropIndex = oneArray.findIndex((item) => item.id === tempRequest.DropID)
     const dropData = oneArray.find((item) => item.id === tempRequest.DropID)
+
+    // 如果找到了拖动项和拖入项，则进行数据处理
     if (dragIndex !== -1 && dragData && dropIndex !== -1 && dropData) {
-      oneArray.splice(dragIndex, 1)
+      oneArray.splice(dragIndex, 1) // 从原位置移除拖动项
+      // 根据拖入的方式，重新插入拖动项到新位置
       switch (tempRequest.DropType) {
         case 'before':
           dragData.parentID = dropData.parentID
@@ -208,13 +236,17 @@ const tableEnd = () => {
           break
       }
     }
-    tableData.value = []
-    nextTick(() => {
-      tableData.value = arraytotree(oneArray)
-      taskTableRef.value?.doLayout()
-    })
-    clearDragAnimation()
   }
+
+  // 重置表格数据，并在下一帧重新渲染表格布局
+  tableData.value = []
+  nextTick(() => {
+    tableData.value = arraytotree(oneArray) // 将处理后的数组转换回树状结构
+    taskTableRef.value?.doLayout() // 重新布局表格
+  })
+
+  // 清除拖动动画
+  clearDragAnimation()
 }
 // 设置拖动排序
 const setDragSort = () => {
