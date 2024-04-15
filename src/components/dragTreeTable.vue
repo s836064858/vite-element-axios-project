@@ -50,14 +50,12 @@ let tableData = ref([
         date: '2016-05-06',
         name: 'wangxiaohu',
         address: 'No. 189, Grove St, Los Angeles',
-        children: [
-          {
-            id: 33,
-            date: '2016-05-07',
-            name: 'wangxiaohu',
-            address: 'No. 189, Grove St, Los Angeles',
-          },
-        ],
+      },
+      {
+        id: 33,
+        date: '2016-05-07',
+        name: 'wangxiaohu',
+        address: 'No. 189, Grove St, Los Angeles',
       },
     ],
   },
@@ -139,7 +137,6 @@ const tableMove = (evt, originalEvent) => {
   } else if (!relatedDom.value) {
     relatedDom.value = evt.related
   }
-
   if (originalEvent.offsetY > 2 && originalEvent.offsetY <= 10) {
     clearDragAnimation()
     // 替换dom的前面
@@ -183,40 +180,31 @@ const tableEnd = () => {
         tempRequest.DropID = Number(item.split('drag-class-')[1])
       }
     })
-
+    console.log(`DragID:${tempRequest.DragID},DropID:${tempRequest.DropID},DropType:${tempRequest.DropType}`)
     // 获取拖动的下标
-    const dragIndex = oneArray.findIndex((item) => item.id == tempRequest.DragID)
+    const dragIndex = oneArray.findIndex((item) => item.id === tempRequest.DragID)
     const dragData = oneArray.find((item) => item.id === tempRequest.DragID)
     // 获取拖入的下标
-    const dropIndex = oneArray.findIndex((item) => item.id == tempRequest.DropID)
-    const dropData = oneArray.find((item) => item.id == tempRequest.DropID)
-    if (dragIndex != -1 && dragData && dropIndex != -1 && dropData) {
+    const dropIndex = oneArray.findIndex((item) => item.id === tempRequest.DropID)
+    const dropData = oneArray.find((item) => item.id === tempRequest.DropID)
+    if (dragIndex !== -1 && dragData && dropIndex !== -1 && dropData) {
       oneArray.splice(dragIndex, 1)
-      console.log(dragData)
-      const childrenIndex = oneArray.findIndex((item) => item.id === dropData.id)
-
       switch (tempRequest.DropType) {
         case 'before':
-          oneArray.splice(dropIndex - 1, 0, dragData)
           dragData.parentID = dropData.parentID
-          // 模拟拖入子节点
-          if (childrenIndex != -1) {
-            oneArray.splice(childrenIndex, 0, dragData)
-          }
+          oneArray.splice(dropIndex, 0, dragData)
           break
         case 'after':
-          oneArray.splice(dropIndex, 0, dragData)
           dragData.parentID = dropData.parentID
-          // 模拟拖入子节点
-          if (childrenIndex != -1) {
-            oneArray.splice(childrenIndex - 1, 0, dragData)
-          }
+          oneArray.splice(dropIndex + 1, 0, dragData)
           break
         case 'inner':
-          oneArray.splice(dropIndex, 0, dragData)
           dragData.parentID = dropData.id
+          oneArray.splice(dropIndex, 0, dragData)
           break
         default:
+          dragData.parentID = dropData.parentID
+          oneArray.splice(dropIndex + 1, 0, dragData)
           break
       }
     }
