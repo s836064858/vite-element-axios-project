@@ -151,6 +151,11 @@ univer.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, {
           14: { v: '实际IYA', s: 'header_style' },
           15: { v: '同期费比', s: 'header_style' },
         },
+        2: {
+          0: {
+            f: '=SUM(A4:B5)',
+          },
+        },
       },
       rowData: {},
       columnData: {

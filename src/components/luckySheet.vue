@@ -1,5 +1,6 @@
 <template>
   <div>
+    <el-button type="primary" size="default" @click="setHeader">设置表头</el-button>
     <el-button type="primary" size="default" @click="setData">设置数据</el-button>
     <!-- 在线预览容器 -->
     <div id="luckysheet"></div>
@@ -8,13 +9,6 @@
 
 <script setup>
 import { onMounted, nextTick } from 'vue'
-
-let header_style = {
-  fs: 12,
-  ht: 0,
-  vt: 0,
-  bg: '#909399',
-}
 
 nextTick(() => {
   var options = {
@@ -26,199 +20,43 @@ nextTick(() => {
       {
         name: 'Cell',
         celldata: [
-          {
-            r: 0,
-            c: 0,
-            v: {
-              ...header_style,
-              m: '部门',
-              v: '部门',
-            },
-          },
-          {
-            r: 0,
-            c: 1,
-            v: {
-              ...header_style,
-              m: '科目',
-              v: '科目',
-            },
-          },
-          {
-            r: 0,
-            c: 2,
-            v: {
-              ...header_style,
-              m: '事项',
-              v: '事项',
-            },
-          },
-          {
-            r: 0,
-            c: 3,
-            v: {
-              ...header_style,
-              m: '内容',
-              v: '内容',
-            },
-          },
-          {
-            r: 0,
-            c: 4,
-            v: {
-              ...header_style,
-              m: '2024年6月',
-              v: '2024年6月',
-            },
-          },
-          {
-            r: 1,
-            c: 4,
-            v: {
-              ...header_style,
-              m: '目标',
-              v: '目标',
-            },
-          },
-          {
-            r: 1,
-            c: 5,
-            v: {
-              ...header_style,
-              m: '目标IYA',
-              v: '目标IYA',
-            },
-          },
-          {
-            r: 1,
-            c: 6,
-            v: {
-              ...header_style,
-              m: '目标费比',
-              v: '目标费比',
-            },
-          },
-          {
-            r: 1,
-            c: 7,
-            v: {
-              ...header_style,
-              m: '实际',
-              v: '实际',
-            },
-          },
-          {
-            r: 1,
-            c: 8,
-            v: {
-              ...header_style,
-              m: '实际完成率',
-              v: '实际完成率',
-            },
-          },
-          {
-            r: 1,
-            c: 9,
-            v: {
-              ...header_style,
-              m: '实际费比',
-              v: '实际费比',
-            },
-          },
-          {
-            r: 1,
-            c: 10,
-            v: {
-              ...header_style,
-              m: '预估',
-              v: '预估',
-            },
-          },
-          {
-            r: 1,
-            c: 11,
-            v: {
-              ...header_style,
-              m: '预估完成率',
-              v: '预估完成率',
-            },
-          },
-          {
-            r: 1,
-            c: 12,
-            v: {
-              ...header_style,
-              m: '预估费比',
-              v: '预估费比',
-            },
-          },
-          {
-            r: 1,
-            c: 13,
-            v: {
-              ...header_style,
-              m: '同期',
-              v: '同期',
-            },
-          },
-          {
-            r: 1,
-            c: 14,
-            v: {
-              ...header_style,
-              m: '实际IYA',
-              v: '实际IYA',
-            },
-          },
-          {
-            r: 1,
-            c: 15,
-            v: {
-              ...header_style,
-              m: '同期费比',
-              v: '同期费比',
-            },
-          },
+          // {
+          //   r: 0,
+          //   c: 0,
+          //   v: {
+          //     f: '=SUM(A2,B2)',
+          //   },
+          // },
         ],
-        config: {
-          merge: {
-            '0_0': {
-              r: 0,
-              c: 0,
-              rs: 2,
-              cs: 1,
-            },
-            '0_1': {
-              r: 0,
-              c: 1,
-              rs: 2,
-              cs: 1,
-            },
-            '0_2': {
-              r: 0,
-              c: 1,
-              rs: 2,
-              cs: 1,
-            },
-            '0_3': {
-              r: 0,
-              c: 1,
-              rs: 2,
-              cs: 1,
-            },
-            '0_4': {
-              r: 0,
-              c: 4,
-              rs: 1,
-              cs: 12,
-            },
-          },
-        },
+        index: 0, //工作表索引
+        status: 1, //激活状态
+        order: 0, //工作表的下标
+        hide: 0, //是否隐藏
+        calcChain: [
+          // {
+          //   r: 0, //行数
+          //   c: 0, //列数
+          //   index: 0,
+          // },
+        ],
       },
     ],
+    hook: {
+      cellUpdated: (r, c, oldValue, newValue) => {
+        console.log(r, c, oldValue, newValue)
+      },
+    },
   }
   luckysheet.create(options)
 })
+
+function setHeader() {
+  let data = [
+    ['部门', '科目', '事项', '内容', '2024年6月', '', '', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '目标', '目标IYA', '目标费比', '实际', '实际完成率', '实际费比', '预估', '预估完成率', '预估费比', '同期', '实际IYA', '同期费比'],
+  ]
+  mergeCellsAndSetValues(data, 0, 0, true)
+}
 
 function setData() {
   let data = [
@@ -286,12 +124,84 @@ function setData() {
     ['事业六部', '销售成本', '商品损耗', '销退未赔付、盘盈亏、报废等', '', '0.00%', '', '', '0.00%', '', '', '0.00%', '', '', '0.00%', ''],
     ['事业六部', '销售成本', '进货货补', '（合同外）亏损补贴', '', '0.00%', '', '', '0.00%', '', '', '0.00%', '', '', '0.00%', ''],
   ]
-  console.log(data)
+  mergeCellsAndSetValues(data, 2, 0, false)
+}
+
+function mergeCellsAndSetValues(data = [], fromRows = 0, fromCells = 0, isMerge = false) {
+  let setValues = [],
+    mergeRange = []
   data.forEach((row, rowIndex) => {
-    row.forEach((cell, cellIndex) => {
-      luckysheet.setCellValue(rowIndex + 2, cellIndex, cell)
+    let temporaryRowValues = []
+    row.map((cell, cellIndex) => {
+      temporaryRowValues.push({
+        v: cell,
+        m: cell,
+      })
+      if (isMerge && cell && cell !== '') {
+        let temporaryMergeRange = findMerge(rowIndex, cellIndex, data)
+        if (temporaryMergeRange) mergeRange.push(temporaryMergeRange)
+      }
     })
+    setValues.push(temporaryRowValues)
   })
+  let range = `${getColumnName(fromCells + 1)}${fromRows + 1}:${getColumnName(fromCells + setValues[0].length)}${fromRows + setValues.length}`
+  console.log(setValues, range)
+  luckysheet.setRangeValue(data, { range })
+  console.log(mergeRange)
+  if (mergeRange.length) luckysheet.setRangeMerge('all', { range: mergeRange })
+}
+
+function findMerge(rowIndex, cellIndex, data) {
+  let currentValue = data[rowIndex][cellIndex]
+  let temporaryCellIndex = cellIndex + 1,
+    isContinueFindCellIndex = true
+  while (isContinueFindCellIndex) {
+    if (data[rowIndex][temporaryCellIndex] === '') {
+      temporaryCellIndex += 1
+    } else {
+      isContinueFindCellIndex = false
+    }
+  }
+  if (cellIndex + 1 !== temporaryCellIndex) {
+    let range = {
+      row: [rowIndex, rowIndex],
+      column: [cellIndex, temporaryCellIndex - 1],
+    }
+    console.log(range)
+    return range
+  }
+  let temporaryRowIndex = rowIndex + 1,
+    isContinueFindRowIndex = true
+  while (isContinueFindRowIndex) {
+    if (data[temporaryRowIndex]) {
+      if (data[temporaryRowIndex][cellIndex] === '') {
+        temporaryRowIndex += 1
+      } else {
+        isContinueFindRowIndex = false
+      }
+    } else {
+      isContinueFindRowIndex = false
+    }
+  }
+  if (rowIndex + 1 !== temporaryRowIndex) {
+    let range = {
+      row: [rowIndex, temporaryRowIndex - 1],
+      column: [cellIndex, cellIndex],
+    }
+    console.log(range)
+    return range
+  }
+  return false
+}
+
+function getColumnName(num) {
+  let columnName = ''
+  while (num > 0) {
+    let remainder = (num - 1) % 26
+    columnName = String.fromCharCode(65 + remainder) + columnName
+    num = Math.floor((num - 1) / 26)
+  }
+  return columnName
 }
 </script>
 <style scoped>
