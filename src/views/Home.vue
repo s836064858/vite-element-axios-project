@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-12-16 09:18:47
- * @LastEditTime: 2024-06-25 16:35:03
+ * @LastEditTime: 2024-07-05 16:42:17
  * @LastEditors: 荛子
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /vite-element-axios-project/src/views/Home.vue
@@ -67,11 +67,20 @@ let imgUrl = ref([])
 </script>
 <style lang="scss" scoped></style> -->
 
-<template>
+<!-- <template>
   <merge-table></merge-table>
 </template>
 <script setup>
 import { onMounted, ref } from 'vue'
 import MergeTable from '@components/mergeTable.vue'
+</script>
+<style lang="scss" scoped></style> -->
+
+<template>
+  <univer-excel></univer-excel>
+</template>
+<script setup>
+import { onMounted, ref } from 'vue'
+import univerExcel from '@components/univerExcel.vue'
 </script>
 <style lang="scss" scoped></style>
