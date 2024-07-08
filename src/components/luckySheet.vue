@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-button type="primary" size="default" @click="setHeader">设置表头</el-button>
+    <!-- <el-button type="primary" size="default" @click="setHeader">设置表头</el-button> -->
     <el-button type="primary" size="default" @click="setData">设置数据</el-button>
     <!-- 在线预览容器 -->
     <div id="luckysheet"></div>
@@ -9,6 +9,506 @@
 
 <script setup>
 import { onMounted, nextTick } from 'vue'
+
+let headerData = [
+  [
+    {
+      v: '部门',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '部门',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+      mc: {
+        rs: 2,
+        cs: 1,
+        r: 0,
+        c: 0,
+      },
+    },
+    {
+      v: '科目',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '科目',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+      mc: {
+        rs: 2,
+        cs: 1,
+        r: 0,
+        c: 1,
+      },
+    },
+    {
+      v: '事项',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '事项',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+      mc: {
+        rs: 2,
+        cs: 1,
+        r: 0,
+        c: 2,
+      },
+    },
+    {
+      v: '内容',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '内容',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+      mc: {
+        rs: 2,
+        cs: 1,
+        r: 0,
+        c: 3,
+      },
+    },
+    {
+      v: '2024年6月',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '2024年6月',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+      mc: {
+        rs: 1,
+        cs: 12,
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 4,
+      },
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  [
+    {
+      mc: {
+        r: 0,
+        c: 0,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 1,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 2,
+      },
+    },
+    {
+      mc: {
+        r: 0,
+        c: 3,
+      },
+    },
+    {
+      v: '目标',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '目标',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '目标IYA',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '目标IYA',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '目标费比',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '目标费比',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '实际',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '实际',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '实际完成率',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '实际完成率',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '实际费比',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '实际费比',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '预估',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '预估',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '预估完成率',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '预估完成率',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '预估费比',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '预估费比',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '同期',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '同期',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '实际IYA',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '实际IYA',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    {
+      v: '同期费比',
+      ct: {
+        fa: 'General',
+        t: 'g',
+      },
+      m: '同期费比',
+      bg: 'rgb(192, 192, 192)',
+      bl: 0,
+      it: 0,
+      ff: 5,
+      fs: 11,
+      fc: 'rgb(0, 0, 0)',
+      ht: 0,
+      vt: 0,
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+]
+
+let celldata = []
+
+headerData.forEach((header, rowIndex) => {
+  header.forEach((item, columnIndex) => {
+    celldata.push({
+      r: rowIndex,
+      c: columnIndex,
+      v: item,
+    })
+  })
+})
+console.log(celldata)
 
 nextTick(() => {
   var options = {
@@ -19,15 +519,7 @@ nextTick(() => {
     data: [
       {
         name: 'Cell',
-        celldata: [
-          // {
-          //   r: 0,
-          //   c: 0,
-          //   v: {
-          //     f: '=SUM(A2,B2)',
-          //   },
-          // },
-        ],
+        celldata: celldata,
         index: 0, //工作表索引
         status: 1, //激活状态
         order: 0, //工作表的下标
