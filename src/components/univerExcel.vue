@@ -1,7 +1,8 @@
 <template>
   <el-button type="primary" size="default" @click="setData">设置数据</el-button>
+  <el-button type="primary" size="default" @click="getData">获取数据</el-button>
 
-  <div id="univer-app" style="height: 100vh"></div>
+  <div id="univer-app" style="height: 95vh"></div>
 </template>
 <script setup>
 const {
@@ -91,7 +92,7 @@ univer.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, {
   sheets: {
     RSfWjJFv4opmE1JaiRj80: {
       id: 'RSfWjJFv4opmE1JaiRj80',
-      name: '测试',
+      name: '数据源',
       tabColor: '',
       hidden: 0,
       rowCount: 65,
@@ -151,19 +152,9 @@ univer.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, {
           14: { v: '实际IYA', s: 'header_style' },
           15: { v: '同期费比', s: 'header_style' },
         },
-        2: {
-          0: {
-            f: '=SUM(A4:B5)',
-          },
-        },
       },
       rowData: {},
-      columnData: {
-        0: {
-          w: 125,
-          hd: 0,
-        },
-      },
+      columnData: {},
       showGridlines: 1,
       rowHeader: {
         width: 46,
@@ -173,7 +164,6 @@ univer.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, {
         height: 20,
         hidden: 0,
       },
-      selections: ['A1'],
       rightToLeft: 0,
     },
   },
@@ -253,7 +243,6 @@ function setData() {
     ['事业六部', '销售成本', '商品损耗', '销退未赔付、盘盈亏、报废等', '', '0.00%', '', '', '0.00%', '', '', '0.00%', '', '', '0.00%', ''],
     ['事业六部', '销售成本', '进货货补', '（合同外）亏损补贴', '', '0.00%', '', '', '0.00%', '', '', '0.00%', '', '', '0.00%', ''],
   ]
-  console.log(data)
   const range1 = activeSheet.getRange(2, 0, data.length, data[0].length)
   range1.setValues(data)
 }
@@ -287,5 +276,9 @@ univerAPI.onCommandExecuted((command) => {
     console.log('修改单元格', currentEditRange, '改后的值', value)
   }
 })
+
+function getData() {
+  console.log(univerAPI.getActiveWorkbook().getSnapshot())
+}
 </script>
 <style lang="scss" scoped></style>
