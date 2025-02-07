@@ -36,9 +36,10 @@
           ref="canvasRef"
           :width="canvasWidth"
           :height="canvasHeight"
-          @mousedown="handleCanvasMouseDown"
-          @mousemove="handleCanvasMouseMove"
-          @mouseup="handleCanvasMouseUp"
+          @mousedown="handleMouseDown"
+          @mousemove="handleMouseMove"
+          @mouseup="handleMouseUp"
+          @mouseleave="handleMouseUp"
         ></canvas>
         <!-- 绘制层画布 -->
         <canvas
@@ -46,13 +47,12 @@
           :width="canvasWidth"
           :height="canvasHeight"
           :style="{
-            // opacity: currentTool === 'draw' ? 1 : 0,
             pointerEvents: currentTool === 'draw' ? 'auto' : 'none',
           }"
-          @mousedown="handleDrawStart"
-          @mousemove="handleDrawMove"
-          @mouseup="handleDrawEnd"
-          @mouseleave="handleDrawEnd"
+          @mousedown="handleMouseDown"
+          @mousemove="handleMouseMove"
+          @mouseup="handleMouseUp"
+          @mouseleave="handleMouseUp"
         ></canvas>
       </div>
 
@@ -367,31 +367,61 @@ function setTool(tool) {
 }
 
 /**
- * @description: 处理画布鼠标按下事件
+ * @description: 处理鼠标按下事件，根据当前工具执行相应操作
  * @param {MouseEvent} event - 鼠标事件对象
  */
-function handleCanvasMouseDown(event) {
+function handleMouseDown(event) {
   if (currentTool.value === 'move') {
     startDragImage(event)
+  } else if (currentTool.value === 'draw') {
+    isDrawing = true
+    const rect = drawingCanvasRef.value.getBoundingClientRect()
+    const scaleX = drawingCanvasRef.value.width / rect.width
+    const scaleY = drawingCanvasRef.value.height / rect.height
+
+    lastX = (event.clientX - rect.left) * scaleX
+    lastY = (event.clientY - rect.top) * scaleY
+
+    drawingCtx.beginPath()
+    drawingCtx.moveTo(lastX, lastY)
   }
 }
 
 /**
- * @description: 处理画布鼠标移动事件
+ * @description: 处理鼠标移动事件，根据当前工具执行相应操作
  * @param {MouseEvent} event - 鼠标事件对象
  */
-function handleCanvasMouseMove(event) {
+function handleMouseMove(event) {
   if (currentTool.value === 'move' && isDraggingImage) {
     dragImage(event)
+  } else if (currentTool.value === 'draw' && isDrawing) {
+    const rect = drawingCanvasRef.value.getBoundingClientRect()
+    const scaleX = drawingCanvasRef.value.width / rect.width
+    const scaleY = drawingCanvasRef.value.height / rect.height
+
+    const x = (event.clientX - rect.left) * scaleX
+    const y = (event.clientY - rect.top) * scaleY
+
+    drawingCtx.lineTo(x, y)
+    drawingCtx.stroke()
+
+    drawingCtx.beginPath()
+    drawingCtx.moveTo(x, y)
+
+    lastX = x
+    lastY = y
   }
 }
 
 /**
- * @description: 处理画布鼠标松开事件
+ * @description: 处理鼠标松开和离开事件，根据当前工具执行相应操作
  */
-function handleCanvasMouseUp() {
+function handleMouseUp() {
   if (currentTool.value === 'move') {
     stopDragImage()
+  } else if (currentTool.value === 'draw') {
+    isDrawing = false
+    drawingCtx.beginPath()
   }
 }
 
@@ -414,56 +444,6 @@ function initDrawingCanvas() {
 
 let lastX = 0
 let lastY = 0
-
-/**
- * @description: 开始涂色操作
- * @param {MouseEvent} event - 鼠标事件对象
- */
-function handleDrawStart(event) {
-  if (currentTool.value !== 'draw') return
-  isDrawing = true
-  const rect = drawingCanvasRef.value.getBoundingClientRect()
-  const scaleX = drawingCanvasRef.value.width / rect.width
-  const scaleY = drawingCanvasRef.value.height / rect.height
-
-  lastX = (event.clientX - rect.left) * scaleX
-  lastY = (event.clientY - rect.top) * scaleY
-
-  drawingCtx.beginPath()
-  drawingCtx.moveTo(lastX, lastY)
-}
-
-/**
- * @description: 处理涂色移动
- * @param {MouseEvent} event - 鼠标事件对象
- */
-function handleDrawMove(event) {
-  if (!isDrawing || currentTool.value !== 'draw') return
-  const rect = drawingCanvasRef.value.getBoundingClientRect()
-  const scaleX = drawingCanvasRef.value.width / rect.width
-  const scaleY = drawingCanvasRef.value.height / rect.height
-
-  const x = (event.clientX - rect.left) * scaleX
-  const y = (event.clientY - rect.top) * scaleY
-
-  drawingCtx.lineTo(x, y)
-  drawingCtx.stroke()
-
-  drawingCtx.beginPath()
-  drawingCtx.moveTo(x, y)
-
-  lastX = x
-  lastY = y
-}
-
-/**
- * @description: 结束涂色操作
- */
-function handleDrawEnd() {
-  if (!isDrawing) return
-  isDrawing = false
-  drawingCtx.beginPath()
-}
 
 /**
  * @description: 清除涂色图层
