@@ -25,8 +25,8 @@
       <div
         class="canvas-container"
         :style="{
-          width: `${canvasWidth}px`,
-          height: `${canvasHeight}px`,
+          width: `${state.canvas.width.value}px`,
+          height: `${state.canvas.height.value}px`,
         }"
       >
         <!-- 透明背景层 -->
@@ -34,8 +34,8 @@
         <!-- Canvas画布 -->
         <canvas
           ref="canvasRef"
-          :width="canvasWidth"
-          :height="canvasHeight"
+          :width="state.canvas.width.value"
+          :height="state.canvas.height.value"
           @mousedown="handleMouseDown"
           @mousemove="handleMouseMove"
           @mouseup="handleMouseUp"
@@ -44,8 +44,8 @@
         <!-- 绘制层画布 -->
         <canvas
           ref="drawingCanvasRef"
-          :width="canvasWidth"
-          :height="canvasHeight"
+          :width="state.canvas.width.value"
+          :height="state.canvas.height.value"
           :style="{
             pointerEvents: currentTool === 'draw' ? 'auto' : 'none',
           }"
@@ -83,44 +83,59 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:width', 'update:height', 'export'])
+const emit = defineEmits(['update:width', 'update:height'])
 
-// Canvas相关
+// Canvas refs
 const canvasRef = ref(null)
-const canvasWidth = ref(props.width)
-const canvasHeight = ref(props.height)
-let ctx = null
-
-// 图片相关
-const image = new Image()
-let imageX = 0
-let imageY = 0
-let imageScale = 1
-let isDraggingImage = false
-let lastMouseX = 0
-let lastMouseY = 0
-
-// 添加旋转角度变量
-let rotationAngle = 0
-
-// 添加新的 refs 和状态
 const drawingCanvasRef = ref(null)
-const currentTool = ref('move') // 默认工具为移动
-let isDrawing = false
-let drawingCtx = null
+
+// 整合 canvas、图片和拖拽调整大小相关状态
+const state = {
+  canvas: {
+    width: ref(props.width),
+    height: ref(props.height),
+    ctx: null,
+  },
+  drawing: {
+    ctx: null,
+    isDrawing: false,
+    lastX: 0,
+    lastY: 0,
+  },
+  image: {
+    element: new Image(),
+    x: 0,
+    y: 0,
+    scale: 1,
+    rotation: 0,
+    isDragging: false,
+    lastMouseX: 0,
+    lastMouseY: 0,
+  },
+  resize: {
+    isActive: false,
+    handle: '',
+    startX: 0,
+    startY: 0,
+    startWidth: 0,
+    startHeight: 0,
+  },
+}
+
+// 当前工具状态
+const currentTool = ref('move')
 
 /**
  * @description: 初始化Canvas画布
  */
 function initCanvas() {
   if (!canvasRef.value) return
-  ctx = canvasRef.value.getContext('2d')
-  ctx.imageSmoothingEnabled = true
-  ctx.imageSmoothingQuality = 'high'
+  state.canvas.ctx = canvasRef.value.getContext('2d')
+  state.canvas.ctx.imageSmoothingEnabled = true
+  state.canvas.ctx.imageSmoothingQuality = 'high'
 
-  // 使用传入的props作为初始画布大小
-  canvasWidth.value = props.width
-  canvasHeight.value = props.height
+  state.canvas.width.value = props.width
+  state.canvas.height.value = props.height
 
   loadImage()
 }
@@ -129,13 +144,13 @@ function initCanvas() {
  * @description: 加载图片并处理跨域
  */
 function loadImage() {
-  image.crossOrigin = 'anonymous'
-  image.src = props.src
-  image.onerror = () => {
+  state.image.element.crossOrigin = 'anonymous'
+  state.image.element.src = props.src
+  state.image.element.onerror = () => {
     console.error('Image load failed, trying with proxy...')
-    image.src = props.src + '?crossorigin'
+    state.image.element.src = props.src + '?crossorigin'
   }
-  image.onload = () => {
+  state.image.element.onload = () => {
     centerImage()
     drawImage()
   }
@@ -146,34 +161,37 @@ function loadImage() {
  */
 function centerImage() {
   // 计算适合的缩放比例
-  const scaleX = canvasWidth.value / image.width
-  const scaleY = canvasHeight.value / image.height
-  imageScale = Math.min(scaleX, scaleY, 1) // 取最小值，且不超过原始大小
+  const scaleX = state.canvas.width.value / state.image.element.width
+  const scaleY = state.canvas.height.value / state.image.element.height
+  state.image.scale = Math.min(scaleX, scaleY, 1) // 取最小值，且不超过原始大小
   // 只在首次加载时居中图片
-  const scaledWidth = image.width * imageScale
-  const scaledHeight = image.height * imageScale
-  imageX = (canvasWidth.value - scaledWidth) / 2
-  imageY = (canvasHeight.value - scaledHeight) / 2
+  const scaledWidth = state.image.element.width * state.image.scale
+  const scaledHeight = state.image.element.height * state.image.scale
+  state.image.x = (state.canvas.width.value - scaledWidth) / 2
+  state.image.y = (state.canvas.height.value - scaledHeight) / 2
 }
 
 /**
  * @description: 在画布上绘制图片，应用旋转和缩放
  */
 function drawImage() {
-  if (!ctx) return
+  if (!state.canvas.ctx) return
   // 清空画布
-  ctx.clearRect(0, 0, canvasWidth.value, canvasHeight.value)
+  state.canvas.ctx.clearRect(0, 0, state.canvas.width.value, state.canvas.height.value)
   // 绘制图片
-  ctx.save()
+  state.canvas.ctx.save()
   // 移动到图片中心点
-  ctx.translate(imageX + (image.width * imageScale) / 2, imageY + (image.height * imageScale) / 2)
+  state.canvas.ctx.translate(
+    state.image.x + (state.image.element.width * state.image.scale) / 2,
+    state.image.y + (state.image.element.height * state.image.scale) / 2
+  )
   // 应用旋转
-  ctx.rotate((rotationAngle * Math.PI) / 180)
+  state.canvas.ctx.rotate((state.image.rotation * Math.PI) / 180)
   // 应用缩放
-  ctx.scale(imageScale, imageScale)
+  state.canvas.ctx.scale(state.image.scale, state.image.scale)
   // 绘制图片，注意从中心点偏移
-  ctx.drawImage(image, -image.width / 2, -image.height / 2)
-  ctx.restore()
+  state.canvas.ctx.drawImage(state.image.element, -state.image.element.width / 2, -state.image.element.height / 2)
+  state.canvas.ctx.restore()
 }
 
 /**
@@ -181,9 +199,9 @@ function drawImage() {
  * @param {MouseEvent} event - 鼠标事件对象
  */
 function startDragImage(event) {
-  isDraggingImage = true
-  lastMouseX = event.clientX
-  lastMouseY = event.clientY
+  state.image.isDragging = true
+  state.image.lastMouseX = event.clientX
+  state.image.lastMouseY = event.clientY
 
   document.addEventListener('mousemove', dragImage)
   document.addEventListener('mouseup', stopDragImage)
@@ -194,13 +212,13 @@ function startDragImage(event) {
  * @param {MouseEvent} event - 鼠标事件对象
  */
 function dragImage(event) {
-  if (!isDraggingImage) return
-  const deltaX = event.clientX - lastMouseX
-  const deltaY = event.clientY - lastMouseY
-  imageX += deltaX
-  imageY += deltaY
-  lastMouseX = event.clientX
-  lastMouseY = event.clientY
+  if (!state.image.isDragging) return
+  const deltaX = event.clientX - state.image.lastMouseX
+  const deltaY = event.clientY - state.image.lastMouseY
+  state.image.x += deltaX
+  state.image.y += deltaY
+  state.image.lastMouseX = event.clientX
+  state.image.lastMouseY = event.clientY
   drawImage()
 }
 
@@ -208,7 +226,7 @@ function dragImage(event) {
  * @description: 结束图片拖动
  */
 function stopDragImage() {
-  isDraggingImage = false
+  state.image.isDragging = false
   document.removeEventListener('mousemove', dragImage)
   document.removeEventListener('mouseup', stopDragImage)
 }
@@ -219,10 +237,10 @@ function stopDragImage() {
  */
 function handleZoom(type) {
   const scaleAmount = type === 'in' ? 1.1 : 0.9
-  imageScale *= scaleAmount
+  state.image.scale *= scaleAmount
 
   // 限制缩放范围
-  imageScale = Math.max(0.1, Math.min(5, imageScale))
+  state.image.scale = Math.max(0.1, Math.min(5, state.image.scale))
 
   // 重新绘制
   drawImage()
@@ -234,35 +252,27 @@ function handleZoom(type) {
  */
 function handleRotate(direction) {
   // 更新旋转角度
-  rotationAngle += direction === 'right' ? 90 : -90
+  state.image.rotation += direction === 'right' ? 90 : -90
   // 标准化角度到0-360范围
-  rotationAngle = ((rotationAngle % 360) + 360) % 360
+  state.image.rotation = ((state.image.rotation % 360) + 360) % 360
   // 重新绘制
   drawImage()
 }
-
-// 拖拽调整大小相关代码
-let isResizing = false
-let currentHandle = ''
-let startX = 0
-let startY = 0
-let startWidth = 0
-let startHeight = 0
 
 /**
  * @description: 开始调整画布大小
  * @param {'top' | 'right' | 'bottom' | 'left'} handle - 拖拽手柄位置
  */
 function startResize(handle) {
-  isResizing = true
-  currentHandle = handle
+  state.resize.isActive = true
+  state.resize.handle = handle
 
   const canvas = document.querySelector('.canvas-container')
-  startWidth = canvas.offsetWidth
-  startHeight = canvas.offsetHeight
+  state.resize.startWidth = canvas.offsetWidth
+  state.resize.startHeight = canvas.offsetHeight
 
-  startX = event.clientX
-  startY = event.clientY
+  state.resize.startX = event.clientX
+  state.resize.startY = event.clientY
 
   document.addEventListener('mousemove', handleResize)
   document.addEventListener('mouseup', stopResize)
@@ -273,42 +283,42 @@ function startResize(handle) {
  * @param {MouseEvent} event - 鼠标事件对象
  */
 function handleResize(event) {
-  if (!isResizing) return
+  if (!state.resize.isActive) return
 
-  const deltaX = event.clientX - startX
-  const deltaY = event.clientY - startY
+  const deltaX = event.clientX - state.resize.startX
+  const deltaY = event.clientY - state.resize.startY
   const parentElement = document.querySelector('.editor-wrapper')
   const maxWidth = parentElement?.offsetWidth || 800
 
-  switch (currentHandle) {
+  switch (state.resize.handle) {
     case 'right':
-      canvasWidth.value = Math.min(startWidth + deltaX, maxWidth)
+      state.canvas.width.value = Math.min(state.resize.startWidth + deltaX, maxWidth)
       break
     case 'left':
-      const widthDiff = startWidth - deltaX - canvasWidth.value
-      canvasWidth.value = Math.min(startWidth - deltaX, maxWidth)
-      imageX -= widthDiff
+      const widthDiff = state.resize.startWidth - deltaX - state.canvas.width.value
+      state.canvas.width.value = Math.min(state.resize.startWidth - deltaX, maxWidth)
+      state.image.x -= widthDiff
       break
     case 'bottom':
-      canvasHeight.value = startHeight + deltaY
+      state.canvas.height.value = state.resize.startHeight + deltaY
       break
     case 'top':
-      const heightDiff = startHeight - deltaY - canvasHeight.value
-      canvasHeight.value = startHeight - deltaY
-      imageY -= heightDiff
+      const heightDiff = state.resize.startHeight - deltaY - state.canvas.height.value
+      state.canvas.height.value = state.resize.startHeight - deltaY
+      state.image.y -= heightDiff
       break
   }
 
   // 确保最小尺寸和最大尺寸
-  canvasWidth.value = Math.max(200, Math.min(canvasWidth.value, maxWidth))
-  canvasHeight.value = Math.max(200, canvasHeight.value)
+  state.canvas.width.value = Math.max(200, Math.min(state.canvas.width.value, maxWidth))
+  state.canvas.height.value = Math.max(200, state.canvas.height.value)
 }
 
 /**
  * @description: 结束画布大小调整
  */
 function stopResize() {
-  isResizing = false
+  state.resize.isActive = false
   document.removeEventListener('mousemove', handleResize)
   document.removeEventListener('mouseup', stopResize)
 }
@@ -318,21 +328,21 @@ function stopResize() {
  */
 function adjustImagePosition() {
   // 获取图片的实际显示尺寸
-  const scaledWidth = image.width * imageScale
-  const scaledHeight = image.height * imageScale
+  const scaledWidth = state.image.element.width * state.image.scale
+  const scaledHeight = state.image.element.height * state.image.scale
 
   // 只处理边界情况，确保图片不会完全超出画布
-  if (imageX < -scaledWidth + 50) {
-    imageX = -scaledWidth + 50
+  if (state.image.x < -scaledWidth + 50) {
+    state.image.x = -scaledWidth + 50
   }
-  if (imageX > canvasWidth.value - 50) {
-    imageX = canvasWidth.value - 50
+  if (state.image.x > state.canvas.width.value - 50) {
+    state.image.x = state.canvas.width.value - 50
   }
-  if (imageY < -scaledHeight + 50) {
-    imageY = -scaledHeight + 50
+  if (state.image.y < -scaledHeight + 50) {
+    state.image.y = -scaledHeight + 50
   }
-  if (imageY > canvasHeight.value - 50) {
-    imageY = canvasHeight.value - 50
+  if (state.image.y > state.canvas.height.value - 50) {
+    state.image.y = state.canvas.height.value - 50
   }
 }
 
@@ -345,11 +355,11 @@ function setAspectRatio(ratio) {
   const maxWidth = parentElement?.offsetWidth || 800
 
   if (ratio === '16:9') {
-    canvasWidth.value = maxWidth
-    canvasHeight.value = maxWidth * (9 / 16)
+    state.canvas.width.value = maxWidth
+    state.canvas.height.value = maxWidth * (9 / 16)
   } else if (ratio === '4:3') {
-    canvasWidth.value = maxWidth
-    canvasHeight.value = maxWidth * (3 / 4)
+    state.canvas.width.value = maxWidth
+    state.canvas.height.value = maxWidth * (3 / 4)
   }
 
   nextTick(() => {
@@ -374,16 +384,16 @@ function handleMouseDown(event) {
   if (currentTool.value === 'move') {
     startDragImage(event)
   } else if (currentTool.value === 'draw') {
-    isDrawing = true
+    state.drawing.isDrawing = true
     const rect = drawingCanvasRef.value.getBoundingClientRect()
     const scaleX = drawingCanvasRef.value.width / rect.width
     const scaleY = drawingCanvasRef.value.height / rect.height
 
-    lastX = (event.clientX - rect.left) * scaleX
-    lastY = (event.clientY - rect.top) * scaleY
+    state.drawing.lastX = (event.clientX - rect.left) * scaleX
+    state.drawing.lastY = (event.clientY - rect.top) * scaleY
 
-    drawingCtx.beginPath()
-    drawingCtx.moveTo(lastX, lastY)
+    state.drawing.ctx.beginPath()
+    state.drawing.ctx.moveTo(state.drawing.lastX, state.drawing.lastY)
   }
 }
 
@@ -392,9 +402,9 @@ function handleMouseDown(event) {
  * @param {MouseEvent} event - 鼠标事件对象
  */
 function handleMouseMove(event) {
-  if (currentTool.value === 'move' && isDraggingImage) {
+  if (currentTool.value === 'move' && state.image.isDragging) {
     dragImage(event)
-  } else if (currentTool.value === 'draw' && isDrawing) {
+  } else if (currentTool.value === 'draw' && state.drawing.isDrawing) {
     const rect = drawingCanvasRef.value.getBoundingClientRect()
     const scaleX = drawingCanvasRef.value.width / rect.width
     const scaleY = drawingCanvasRef.value.height / rect.height
@@ -402,14 +412,14 @@ function handleMouseMove(event) {
     const x = (event.clientX - rect.left) * scaleX
     const y = (event.clientY - rect.top) * scaleY
 
-    drawingCtx.lineTo(x, y)
-    drawingCtx.stroke()
+    state.drawing.ctx.lineTo(x, y)
+    state.drawing.ctx.stroke()
 
-    drawingCtx.beginPath()
-    drawingCtx.moveTo(x, y)
+    state.drawing.ctx.beginPath()
+    state.drawing.ctx.moveTo(x, y)
 
-    lastX = x
-    lastY = y
+    state.drawing.lastX = x
+    state.drawing.lastY = y
   }
 }
 
@@ -420,8 +430,8 @@ function handleMouseUp() {
   if (currentTool.value === 'move') {
     stopDragImage()
   } else if (currentTool.value === 'draw') {
-    isDrawing = false
-    drawingCtx.beginPath()
+    state.drawing.isDrawing = false
+    state.drawing.ctx.beginPath()
   }
 }
 
@@ -430,27 +440,24 @@ function handleMouseUp() {
  */
 function initDrawingCanvas() {
   if (!drawingCanvasRef.value) return
-  drawingCtx = drawingCanvasRef.value.getContext('2d', { willReadFrequently: true })
-  drawingCtx.globalCompositeOperation = 'source-over'
-  drawingCtx.strokeStyle = '#FF0000'
-  drawingCtx.fillStyle = '#FF0000'
-  drawingCtx.lineWidth = 30
-  drawingCtx.lineCap = 'round'
-  drawingCtx.lineJoin = 'round'
-  drawingCtx.globalAlpha = 1
-  drawingCtx.imageSmoothingEnabled = true
-  drawingCtx.imageSmoothingQuality = 'high'
+  state.drawing.ctx = drawingCanvasRef.value.getContext('2d', { willReadFrequently: true })
+  state.drawing.ctx.globalCompositeOperation = 'source-over'
+  state.drawing.ctx.strokeStyle = '#FF0000'
+  state.drawing.ctx.fillStyle = '#FF0000'
+  state.drawing.ctx.lineWidth = 30
+  state.drawing.ctx.lineCap = 'round'
+  state.drawing.ctx.lineJoin = 'round'
+  state.drawing.ctx.globalAlpha = 1
+  state.drawing.ctx.imageSmoothingEnabled = true
+  state.drawing.ctx.imageSmoothingQuality = 'high'
 }
-
-let lastX = 0
-let lastY = 0
 
 /**
  * @description: 清除涂色图层
  */
 function clearDrawingLayer() {
   if (!drawingCanvasRef.value) return
-  drawingCtx.clearRect(0, 0, canvasWidth.value, canvasHeight.value)
+  state.drawing.ctx.clearRect(0, 0, state.canvas.width.value, state.canvas.height.value)
 }
 
 // 分离导出函数
@@ -478,30 +485,30 @@ function exportDrawingLayer() {
 function getCanvasInfo() {
   return {
     canvas: {
-      width: canvasWidth.value,
-      height: canvasHeight.value,
+      width: state.canvas.width.value,
+      height: state.canvas.height.value,
     },
     image: {
       // 实际显示尺寸
-      width: image.width * imageScale,
-      height: image.height * imageScale,
+      width: state.image.element.width * state.image.scale,
+      height: state.image.element.height * state.image.scale,
       // 位置信息
-      x: imageX,
-      y: imageY,
+      x: state.image.x,
+      y: state.image.y,
       // 变换信息
-      scale: imageScale,
-      rotation: rotationAngle,
+      scale: state.image.scale,
+      rotation: state.image.rotation,
       // 原始尺寸
-      naturalWidth: image.width,
-      naturalHeight: image.height,
+      naturalWidth: state.image.element.width,
+      naturalHeight: state.image.element.height,
     },
   }
 }
 
 // Watchers
-watch([canvasWidth, canvasHeight], () => {
-  emit('update:width', canvasWidth.value)
-  emit('update:height', canvasHeight.value)
+watch([state.canvas.width, state.canvas.height], () => {
+  emit('update:width', state.canvas.width.value)
+  emit('update:height', state.canvas.height.value)
 
   nextTick(() => {
     // 只调整边界，不改变图片位置
