@@ -202,9 +202,6 @@ function startDragImage(event) {
   state.image.isDragging = true
   state.image.lastMouseX = event.clientX
   state.image.lastMouseY = event.clientY
-
-  document.addEventListener('mousemove', dragImage)
-  document.addEventListener('mouseup', stopDragImage)
 }
 
 /**
@@ -392,6 +389,17 @@ function handleMouseDown(event) {
     state.drawing.lastX = (event.clientX - rect.left) * scaleX
     state.drawing.lastY = (event.clientY - rect.top) * scaleY
 
+    //重新定义画笔
+    state.drawing.ctx.globalCompositeOperation = 'source-over'
+    state.drawing.ctx.strokeStyle = '#FF0000'
+    state.drawing.ctx.fillStyle = '#FF0000'
+    state.drawing.ctx.lineWidth = 30
+    state.drawing.ctx.lineCap = 'round'
+    state.drawing.ctx.lineJoin = 'round'
+    state.drawing.ctx.globalAlpha = 1
+    state.drawing.ctx.imageSmoothingEnabled = true
+    state.drawing.ctx.imageSmoothingQuality = 'high'
+
     state.drawing.ctx.beginPath()
     state.drawing.ctx.moveTo(state.drawing.lastX, state.drawing.lastY)
   }
@@ -441,15 +449,6 @@ function handleMouseUp() {
 function initDrawingCanvas() {
   if (!drawingCanvasRef.value) return
   state.drawing.ctx = drawingCanvasRef.value.getContext('2d', { willReadFrequently: true })
-  state.drawing.ctx.globalCompositeOperation = 'source-over'
-  state.drawing.ctx.strokeStyle = '#FF0000'
-  state.drawing.ctx.fillStyle = '#FF0000'
-  state.drawing.ctx.lineWidth = 30
-  state.drawing.ctx.lineCap = 'round'
-  state.drawing.ctx.lineJoin = 'round'
-  state.drawing.ctx.globalAlpha = 1
-  state.drawing.ctx.imageSmoothingEnabled = true
-  state.drawing.ctx.imageSmoothingQuality = 'high'
 }
 
 /**
@@ -533,8 +532,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('mousemove', handleResize)
   document.removeEventListener('mouseup', stopResize)
-  document.removeEventListener('mousemove', dragImage)
-  document.removeEventListener('mouseup', stopDragImage)
 })
 
 // Expose methods
