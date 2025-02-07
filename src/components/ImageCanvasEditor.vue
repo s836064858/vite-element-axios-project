@@ -4,6 +4,11 @@
       <!-- 添加旋转和缩放控制按钮 -->
       <div class="control-buttons">
         <div class="button-group">
+          <button class="control-btn" :class="{ active: currentTool === 'move' }" @click="setTool('move')" title="移动">↔</button>
+          <button class="control-btn" :class="{ active: currentTool === 'draw' }" @click="setTool('draw')" title="涂色">✏</button>
+          <button class="control-btn" @click="clearDrawingLayer" title="重置涂色">↺</button>
+        </div>
+        <div class="button-group">
           <button class="control-btn" @click="handleZoom('in')" title="放大">+</button>
           <button class="control-btn" @click="handleZoom('out')" title="缩小">-</button>
         </div>
@@ -27,7 +32,28 @@
         <!-- 透明背景层 -->
         <div class="transparent-bg"></div>
         <!-- Canvas画布 -->
-        <canvas ref="canvasRef" :width="canvasWidth" :height="canvasHeight" @mousedown="startDragImage"></canvas>
+        <canvas
+          ref="canvasRef"
+          :width="canvasWidth"
+          :height="canvasHeight"
+          @mousedown="handleCanvasMouseDown"
+          @mousemove="handleCanvasMouseMove"
+          @mouseup="handleCanvasMouseUp"
+        ></canvas>
+        <!-- 绘制层画布 -->
+        <canvas
+          ref="drawingCanvasRef"
+          :width="canvasWidth"
+          :height="canvasHeight"
+          :style="{
+            // opacity: currentTool === 'draw' ? 1 : 0,
+            pointerEvents: currentTool === 'draw' ? 'auto' : 'none',
+          }"
+          @mousedown="handleDrawStart"
+          @mousemove="handleDrawMove"
+          @mouseup="handleDrawEnd"
+          @mouseleave="handleDrawEnd"
+        ></canvas>
       </div>
 
       <!-- 拖拽手柄 -->
@@ -76,6 +102,12 @@ let lastMouseY = 0
 
 // 添加旋转角度变量
 let rotationAngle = 0
+
+// 添加新的 refs 和状态
+const drawingCanvasRef = ref(null)
+const currentTool = ref('move') // 默认工具为移动
+let isDrawing = false
+let drawingCtx = null
 
 /**
  * @description: 初始化Canvas画布
@@ -327,12 +359,137 @@ function setAspectRatio(ratio) {
 }
 
 /**
- * @description: 导出画布为PNG格式的base64字符串
- * @returns {string} 图片的base64编码
+ * @description: 设置当前工具（移动/涂色）
+ * @param {'move' | 'draw'} tool - 工具类型
  */
-function exportImage() {
+function setTool(tool) {
+  currentTool.value = tool
+}
+
+/**
+ * @description: 处理画布鼠标按下事件
+ * @param {MouseEvent} event - 鼠标事件对象
+ */
+function handleCanvasMouseDown(event) {
+  if (currentTool.value === 'move') {
+    startDragImage(event)
+  }
+}
+
+/**
+ * @description: 处理画布鼠标移动事件
+ * @param {MouseEvent} event - 鼠标事件对象
+ */
+function handleCanvasMouseMove(event) {
+  if (currentTool.value === 'move' && isDraggingImage) {
+    dragImage(event)
+  }
+}
+
+/**
+ * @description: 处理画布鼠标松开事件
+ */
+function handleCanvasMouseUp() {
+  if (currentTool.value === 'move') {
+    stopDragImage()
+  }
+}
+
+/**
+ * @description: 初始化涂色画布的上下文配置
+ */
+function initDrawingCanvas() {
+  if (!drawingCanvasRef.value) return
+  drawingCtx = drawingCanvasRef.value.getContext('2d', { willReadFrequently: true })
+  drawingCtx.globalCompositeOperation = 'source-over'
+  drawingCtx.strokeStyle = '#FF0000'
+  drawingCtx.fillStyle = '#FF0000'
+  drawingCtx.lineWidth = 30
+  drawingCtx.lineCap = 'round'
+  drawingCtx.lineJoin = 'round'
+  drawingCtx.globalAlpha = 1
+  drawingCtx.imageSmoothingEnabled = true
+  drawingCtx.imageSmoothingQuality = 'high'
+}
+
+let lastX = 0
+let lastY = 0
+
+/**
+ * @description: 开始涂色操作
+ * @param {MouseEvent} event - 鼠标事件对象
+ */
+function handleDrawStart(event) {
+  if (currentTool.value !== 'draw') return
+  isDrawing = true
+  const rect = drawingCanvasRef.value.getBoundingClientRect()
+  const scaleX = drawingCanvasRef.value.width / rect.width
+  const scaleY = drawingCanvasRef.value.height / rect.height
+
+  lastX = (event.clientX - rect.left) * scaleX
+  lastY = (event.clientY - rect.top) * scaleY
+
+  drawingCtx.beginPath()
+  drawingCtx.moveTo(lastX, lastY)
+}
+
+/**
+ * @description: 处理涂色移动
+ * @param {MouseEvent} event - 鼠标事件对象
+ */
+function handleDrawMove(event) {
+  if (!isDrawing || currentTool.value !== 'draw') return
+  const rect = drawingCanvasRef.value.getBoundingClientRect()
+  const scaleX = drawingCanvasRef.value.width / rect.width
+  const scaleY = drawingCanvasRef.value.height / rect.height
+
+  const x = (event.clientX - rect.left) * scaleX
+  const y = (event.clientY - rect.top) * scaleY
+
+  drawingCtx.lineTo(x, y)
+  drawingCtx.stroke()
+
+  drawingCtx.beginPath()
+  drawingCtx.moveTo(x, y)
+
+  lastX = x
+  lastY = y
+}
+
+/**
+ * @description: 结束涂色操作
+ */
+function handleDrawEnd() {
+  if (!isDrawing) return
+  isDrawing = false
+  drawingCtx.beginPath()
+}
+
+/**
+ * @description: 清除涂色图层
+ */
+function clearDrawingLayer() {
+  if (!drawingCanvasRef.value) return
+  drawingCtx.clearRect(0, 0, canvasWidth.value, canvasHeight.value)
+}
+
+// 分离导出函数
+/**
+ * @description: 导出原始图层
+ * @returns {string} 原始图层的base64编码
+ */
+function exportOriginalLayer() {
   if (!canvasRef.value) return ''
   return canvasRef.value.toDataURL('image/png')
+}
+
+/**
+ * @description: 导出涂色图层
+ * @returns {string} 涂色图层的base64编码
+ */
+function exportDrawingLayer() {
+  if (!drawingCanvasRef.value) return ''
+  return drawingCanvasRef.value.toDataURL('image/png')
 }
 
 // Watchers
@@ -357,6 +514,7 @@ watch(
 // Lifecycle hooks
 onMounted(() => {
   initCanvas()
+  initDrawingCanvas()
 })
 
 onUnmounted(() => {
@@ -368,7 +526,9 @@ onUnmounted(() => {
 
 // Expose methods
 defineExpose({
-  exportImage,
+  exportOriginalLayer,
+  exportDrawingLayer,
+  clearDrawingLayer, // 暴露清除方法给父组件
 })
 </script>
 
@@ -413,6 +573,11 @@ defineExpose({
     left: 0;
     width: 100%;
     height: 100%;
+
+    // 移除这部分样式，因为我们现在使用内联样式控制pointer-events
+    &:nth-child(3) {
+      transition: opacity 0.3s;
+    }
   }
 }
 
@@ -504,6 +669,12 @@ defineExpose({
       width: auto;
       padding: 0 10px;
       font-size: 14px;
+    }
+
+    &.active {
+      background: #e3f2fd;
+      border-color: #2196f3;
+      color: #2196f3;
     }
   }
 }

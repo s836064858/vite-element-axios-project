@@ -122,14 +122,23 @@ const handleHeightChange = (height) => {
 const handleExport = () => {
   if (!editorRef.value) return
 
-  const base64Image = editorRef.value.exportImage()
-  if (!base64Image) return // 如果导出失败，直接返回
+  // 导出原始图层
+  const originalImage = editorRef.value.exportOriginalLayer()
+
+  // 导出涂色图层
+  const drawingImage = editorRef.value.exportDrawingLayer()
 
   // 创建下载链接
   const link = document.createElement('a')
-  link.download = 'canvas-image.png'
-  link.href = base64Image
+  link.download = 'original-image.png'
+  link.href = originalImage
   link.click()
+
+  // 如果需要也可以下载涂色图层
+  const drawingLink = document.createElement('a')
+  drawingLink.download = 'drawing-layer.png'
+  drawingLink.href = drawingImage
+  drawingLink.click()
 }
 </script>
 
