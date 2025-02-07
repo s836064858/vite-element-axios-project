@@ -1,35 +1,41 @@
 <template>
-  <div class="canvas-wrapper">
-    <!-- 添加旋转和缩放控制按钮 -->
-    <div class="control-buttons">
-      <div class="zoom-controls">
-        <button class="control-btn" @click="handleZoom('in')" title="放大">+</button>
-        <button class="control-btn" @click="handleZoom('out')" title="缩小">-</button>
+  <div class="editor-wrapper">
+    <div class="canvas-wrapper">
+      <!-- 添加旋转和缩放控制按钮 -->
+      <div class="control-buttons">
+        <div class="button-group">
+          <button class="control-btn" @click="handleZoom('in')" title="放大">+</button>
+          <button class="control-btn" @click="handleZoom('out')" title="缩小">-</button>
+        </div>
+        <div class="button-group">
+          <button class="control-btn" @click="handleRotate('left')" title="逆时针旋转90度">↺</button>
+          <button class="control-btn" @click="handleRotate('right')" title="顺时针旋转90度">↻</button>
+        </div>
+        <div class="button-group">
+          <button class="control-btn aspect-btn" @click="setAspectRatio('16:9')" title="16:9">16:9</button>
+          <button class="control-btn aspect-btn" @click="setAspectRatio('4:3')" title="4:3">4:3</button>
+        </div>
       </div>
-      <div class="rotate-controls">
-        <button class="control-btn" @click="handleRotate('left')" title="逆时针旋转90度">↺</button>
-        <button class="control-btn" @click="handleRotate('right')" title="顺时针旋转90度">↻</button>
+
+      <div
+        class="canvas-container"
+        :style="{
+          width: `${canvasWidth}px`,
+          height: `${canvasHeight}px`,
+        }"
+      >
+        <!-- 透明背景层 -->
+        <div class="transparent-bg"></div>
+        <!-- Canvas画布 -->
+        <canvas ref="canvasRef" :width="canvasWidth" :height="canvasHeight" @mousedown="startDragImage"></canvas>
       </div>
-    </div>
 
-    <div
-      class="canvas-container"
-      :style="{
-        width: `${canvasWidth}px`,
-        height: `${canvasHeight}px`,
-      }"
-    >
-      <!-- 透明背景层 -->
-      <div class="transparent-bg"></div>
-      <!-- Canvas画布 -->
-      <canvas ref="canvasRef" :width="canvasWidth" :height="canvasHeight" @mousedown="startDragImage"></canvas>
+      <!-- 拖拽手柄 -->
+      <div class="resize-handle top" @mousedown="startResize('top')"></div>
+      <div class="resize-handle right" @mousedown="startResize('right')"></div>
+      <div class="resize-handle bottom" @mousedown="startResize('bottom')"></div>
+      <div class="resize-handle left" @mousedown="startResize('left')"></div>
     </div>
-
-    <!-- 拖拽手柄 -->
-    <div class="resize-handle top" @mousedown="startResize('top')"></div>
-    <div class="resize-handle right" @mousedown="startResize('right')"></div>
-    <div class="resize-handle bottom" @mousedown="startResize('bottom')"></div>
-    <div class="resize-handle left" @mousedown="startResize('left')"></div>
   </div>
 </template>
 
@@ -71,6 +77,25 @@ let lastMouseY = 0
 // 添加旋转角度变量
 let rotationAngle = 0
 
+/**
+ * @description: 初始化Canvas画布
+ */
+function initCanvas() {
+  if (!canvasRef.value) return
+  ctx = canvasRef.value.getContext('2d')
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+
+  // 使用传入的props作为初始画布大小
+  canvasWidth.value = props.width
+  canvasHeight.value = props.height
+
+  loadImage()
+}
+
+/**
+ * @description: 加载图片并处理跨域
+ */
 function loadImage() {
   image.crossOrigin = 'anonymous'
   image.src = props.src
@@ -84,6 +109,9 @@ function loadImage() {
   }
 }
 
+/**
+ * @description: 计算并设置图片在画布中的居中位置和缩放比例
+ */
 function centerImage() {
   // 计算适合的缩放比例
   const scaleX = canvasWidth.value / image.width
@@ -96,7 +124,9 @@ function centerImage() {
   imageY = (canvasHeight.value - scaledHeight) / 2
 }
 
-// 绘制图片
+/**
+ * @description: 在画布上绘制图片，应用旋转和缩放
+ */
 function drawImage() {
   if (!ctx) return
   // 清空画布
@@ -114,7 +144,10 @@ function drawImage() {
   ctx.restore()
 }
 
-// 图片拖动相关
+/**
+ * @description: 开始拖动图片
+ * @param {MouseEvent} event - 鼠标事件对象
+ */
 function startDragImage(event) {
   isDraggingImage = true
   lastMouseX = event.clientX
@@ -124,6 +157,10 @@ function startDragImage(event) {
   document.addEventListener('mouseup', stopDragImage)
 }
 
+/**
+ * @description: 处理图片拖动
+ * @param {MouseEvent} event - 鼠标事件对象
+ */
 function dragImage(event) {
   if (!isDraggingImage) return
   const deltaX = event.clientX - lastMouseX
@@ -135,6 +172,9 @@ function dragImage(event) {
   drawImage()
 }
 
+/**
+ * @description: 结束图片拖动
+ */
 function stopDragImage() {
   isDraggingImage = false
   document.removeEventListener('mousemove', dragImage)
@@ -142,9 +182,8 @@ function stopDragImage() {
 }
 
 /**
- * @description:  缩放图片
- * @param {*} type
- * @return {*}
+ * @description: 处理图片缩放
+ * @param {'in' | 'out'} type - 缩放类型，'in'表示放大，'out'表示缩小
  */
 function handleZoom(type) {
   const scaleAmount = type === 'in' ? 1.1 : 0.9
@@ -158,9 +197,8 @@ function handleZoom(type) {
 }
 
 /**
- * @description: 添加旋转处理函数
- * @param {*} direction
- * @return {*}
+ * @description: 处理图片旋转
+ * @param {'left' | 'right'} direction - 旋转方向，'left'表示逆时针，'right'表示顺时针
  */
 function handleRotate(direction) {
   // 更新旋转角度
@@ -171,35 +209,6 @@ function handleRotate(direction) {
   drawImage()
 }
 
-// Canvas初始化
-function initCanvas() {
-  if (!canvasRef.value) return
-  ctx = canvasRef.value.getContext('2d')
-  ctx.imageSmoothingEnabled = true
-  ctx.imageSmoothingQuality = 'high'
-  loadImage()
-}
-
-// 监听画布尺寸变化
-watch([canvasWidth, canvasHeight], () => {
-  emit('update:width', canvasWidth.value)
-  emit('update:height', canvasHeight.value)
-
-  nextTick(() => {
-    // 只调整边界，不改变图片位置
-    adjustImagePosition()
-    drawImage()
-  })
-})
-
-// 监听src变化
-watch(
-  () => props.src,
-  () => {
-    loadImage()
-  }
-)
-
 // 拖拽调整大小相关代码
 let isResizing = false
 let currentHandle = ''
@@ -208,6 +217,10 @@ let startY = 0
 let startWidth = 0
 let startHeight = 0
 
+/**
+ * @description: 开始调整画布大小
+ * @param {'top' | 'right' | 'bottom' | 'left'} handle - 拖拽手柄位置
+ */
 function startResize(handle) {
   isResizing = true
   currentHandle = handle
@@ -223,7 +236,54 @@ function startResize(handle) {
   document.addEventListener('mouseup', stopResize)
 }
 
-// 添加新的辅助函数
+/**
+ * @description: 处理画布大小调整
+ * @param {MouseEvent} event - 鼠标事件对象
+ */
+function handleResize(event) {
+  if (!isResizing) return
+
+  const deltaX = event.clientX - startX
+  const deltaY = event.clientY - startY
+  const parentElement = document.querySelector('.editor-wrapper')
+  const maxWidth = parentElement?.offsetWidth || 800
+
+  switch (currentHandle) {
+    case 'right':
+      canvasWidth.value = Math.min(startWidth + deltaX, maxWidth)
+      break
+    case 'left':
+      const widthDiff = startWidth - deltaX - canvasWidth.value
+      canvasWidth.value = Math.min(startWidth - deltaX, maxWidth)
+      imageX -= widthDiff
+      break
+    case 'bottom':
+      canvasHeight.value = startHeight + deltaY
+      break
+    case 'top':
+      const heightDiff = startHeight - deltaY - canvasHeight.value
+      canvasHeight.value = startHeight - deltaY
+      imageY -= heightDiff
+      break
+  }
+
+  // 确保最小尺寸和最大尺寸
+  canvasWidth.value = Math.max(200, Math.min(canvasWidth.value, maxWidth))
+  canvasHeight.value = Math.max(200, canvasHeight.value)
+}
+
+/**
+ * @description: 结束画布大小调整
+ */
+function stopResize() {
+  isResizing = false
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+}
+
+/**
+ * @description: 调整图片位置确保不会完全超出画布
+ */
 function adjustImagePosition() {
   // 获取图片的实际显示尺寸
   const scaledWidth = image.width * imageScale
@@ -244,53 +304,57 @@ function adjustImagePosition() {
   }
 }
 
-function handleResize(event) {
-  if (!isResizing) return
+/**
+ * @description: 设置画布宽高比
+ * @param {'16:9' | '4:3'} ratio - 目标宽高比
+ */
+function setAspectRatio(ratio) {
+  const parentElement = document.querySelector('.editor-wrapper')
+  const maxWidth = parentElement?.offsetWidth || 800
 
-  const deltaX = event.clientX - startX
-  const deltaY = event.clientY - startY
-
-  switch (currentHandle) {
-    case 'right':
-      canvasWidth.value = startWidth + deltaX
-      break
-    case 'left':
-      const widthDiff = startWidth - deltaX - canvasWidth.value
-      canvasWidth.value = startWidth - deltaX
-      imageX -= widthDiff
-      break
-    case 'bottom':
-      canvasHeight.value = startHeight + deltaY
-      break
-    case 'top':
-      const heightDiff = startHeight - deltaY - canvasHeight.value
-      canvasHeight.value = startHeight - deltaY
-      imageY -= heightDiff
-      break
+  if (ratio === '16:9') {
+    canvasWidth.value = maxWidth
+    canvasHeight.value = maxWidth * (9 / 16)
+  } else if (ratio === '4:3') {
+    canvasWidth.value = maxWidth
+    canvasHeight.value = maxWidth * (3 / 4)
   }
 
-  // 确保最小尺寸
-  canvasWidth.value = Math.max(200, canvasWidth.value)
-  canvasHeight.value = Math.max(200, canvasHeight.value)
+  nextTick(() => {
+    adjustImagePosition()
+    drawImage()
+  })
 }
 
-function stopResize() {
-  isResizing = false
-  document.removeEventListener('mousemove', handleResize)
-  document.removeEventListener('mouseup', stopResize)
-}
-
-// 简化导出方法
+/**
+ * @description: 导出画布为PNG格式的base64字符串
+ * @returns {string} 图片的base64编码
+ */
 function exportImage() {
   if (!canvasRef.value) return ''
   return canvasRef.value.toDataURL('image/png')
 }
 
-// 暴露方法给父组件
-defineExpose({
-  exportImage,
+// Watchers
+watch([canvasWidth, canvasHeight], () => {
+  emit('update:width', canvasWidth.value)
+  emit('update:height', canvasHeight.value)
+
+  nextTick(() => {
+    // 只调整边界，不改变图片位置
+    adjustImagePosition()
+    drawImage()
+  })
 })
 
+watch(
+  () => props.src,
+  () => {
+    loadImage()
+  }
+)
+
+// Lifecycle hooks
 onMounted(() => {
   initCanvas()
 })
@@ -301,19 +365,26 @@ onUnmounted(() => {
   document.removeEventListener('mousemove', dragImage)
   document.removeEventListener('mouseup', stopDragImage)
 })
+
+// Expose methods
+defineExpose({
+  exportImage,
+})
 </script>
 
 <style lang="scss" scoped>
+.editor-wrapper {
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
 // 画布包装器，用于定位拖拽手柄
 .canvas-wrapper {
   position: relative;
   display: inline-block;
-
-  // 确保子元素不会溢出
-  .canvas-container {
-    position: relative;
-    overflow: visible;
-  }
+  margin-top: 60px; // 为顶部按钮留出空间
 }
 
 // 画布容器样式
@@ -393,29 +464,26 @@ onUnmounted(() => {
 // 修改控制按钮样式
 .control-buttons {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: -50px; // 移动到画布上方
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 20px;
   z-index: 10;
 
-  .zoom-controls,
-  .rotate-controls {
+  .button-group {
     display: flex;
-    flex-direction: column;
     gap: 5px;
   }
 
   .control-btn {
-    width: 30px;
-    height: 30px;
-    border: none;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e0e0e0;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.9);
+    background: white;
     color: #333;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -424,12 +492,18 @@ onUnmounted(() => {
     transition: all 0.2s ease;
 
     &:hover {
-      background: rgba(255, 255, 255, 1);
-      transform: scale(1.05);
+      background: #f5f5f5;
+      transform: translateY(-1px);
     }
 
     &:active {
-      transform: scale(0.95);
+      transform: translateY(1px);
+    }
+
+    &.aspect-btn {
+      width: auto;
+      padding: 0 10px;
+      font-size: 14px;
     }
   }
 }

@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-12-16 09:18:47
- * @LastEditTime: 2025-02-07 09:26:35
+ * @LastEditTime: 2025-02-07 10:11:48
  * @LastEditors: 荛子
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /vite-element-axios-project/src/views/Home.vue
@@ -97,7 +97,7 @@ import univerExcel from '@components/univerExcel.vue'
 
 <template>
   <div class="editor-container">
-    <image-canvas-editor ref="editorRef" :src="imageUrl" :width="800" :height="600" @update:width="handleWidthChange" @update:height="handleHeightChange" />
+    <image-canvas-editor ref="editorRef" :src="imageUrl" :width="400" :height="300" @update:width="handleWidthChange" @update:height="handleHeightChange" />
     <div class="button-container">
       <button @click="handleExport">导出图片</button>
     </div>
@@ -139,7 +139,6 @@ const handleExport = () => {
   background: #f0f0f0;
   min-height: 100vh;
 }
-
 .button-container {
   margin-top: 20px;
 
