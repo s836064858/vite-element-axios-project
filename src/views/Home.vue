@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-12-16 09:18:47
- * @LastEditTime: 2024-07-09 11:05:24
+ * @LastEditTime: 2024-07-11 09:36:10
  * @LastEditors: 荛子
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /vite-element-axios-project/src/views/Home.vue
@@ -86,8 +86,8 @@ import univerExcel from '@components/univerExcel.vue'
 <style lang="scss" scoped></style> -->
 
 <template>
-  <!-- <luckySheet></luckySheet> -->
-  <univer-excel></univer-excel>
+  <luckySheet></luckySheet>
+  <!-- <univer-excel></univer-excel> -->
 </template>
 <script setup>
 import { onMounted, ref } from 'vue'
