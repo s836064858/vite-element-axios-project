@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-12-16 09:18:47
- * @LastEditTime: 2024-07-11 09:36:10
+ * @LastEditTime: 2025-02-07 09:26:35
  * @LastEditors: 荛子
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /vite-element-axios-project/src/views/Home.vue
@@ -85,13 +85,76 @@ import univerExcel from '@components/univerExcel.vue'
 </script>
 <style lang="scss" scoped></style> -->
 
-<template>
+<!-- <template>
   <luckySheet></luckySheet>
-  <!-- <univer-excel></univer-excel> -->
 </template>
 <script setup>
 import { onMounted, ref } from 'vue'
 import luckySheet from '@components/luckySheet.vue'
 import univerExcel from '@components/univerExcel.vue'
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped></style> -->
+
+<template>
+  <div class="editor-container">
+    <image-canvas-editor ref="editorRef" :src="imageUrl" :width="800" :height="600" @update:width="handleWidthChange" @update:height="handleHeightChange" />
+    <div class="button-container">
+      <button @click="handleExport">导出图片</button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import ImageCanvasEditor from '@components/ImageCanvasEditor.vue'
+
+const imageUrl = ref('https://picsum.photos/800/600')
+const editorRef = ref(null)
+
+const handleWidthChange = (width) => {
+  console.log('Canvas width changed:', width)
+}
+
+const handleHeightChange = (height) => {
+  console.log('Canvas height changed:', height)
+}
+
+const handleExport = () => {
+  if (!editorRef.value) return
+
+  const base64Image = editorRef.value.exportImage()
+  if (!base64Image) return // 如果导出失败，直接返回
+
+  // 创建下载链接
+  const link = document.createElement('a')
+  link.download = 'canvas-image.png'
+  link.href = base64Image
+  link.click()
+}
+</script>
+
+<style lang="scss" scoped>
+.editor-container {
+  padding: 20px;
+  background: #f0f0f0;
+  min-height: 100vh;
+}
+
+.button-container {
+  margin-top: 20px;
+
+  button {
+    padding: 8px 16px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+
+    &:hover {
+      background: #1976d2;
+    }
+  }
+}
+</style>
