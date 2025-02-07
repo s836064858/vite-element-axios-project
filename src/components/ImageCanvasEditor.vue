@@ -95,6 +95,7 @@ const state = {
     isDrawing: false,
     lastX: 0,
     lastY: 0,
+    imageData: null,
   },
   image: {
     element: new Image(),
@@ -145,7 +146,7 @@ function loadImage() {
   }
   state.image.element.onload = () => {
     centerImage()
-    drawImage()
+    drawImageAndLine()
   }
 }
 
@@ -165,24 +166,47 @@ function centerImage() {
 }
 
 /**
- * @description: 在画布上绘制图片，应用旋转和缩放
+ * @description: 在画布上绘制图片和绘图层
  */
-function drawImage() {
+function drawImageAndLine() {
   if (!state.canvas.ctx) return
+
   // 清空画布
   state.canvas.ctx.clearRect(0, 0, state.canvas.width.value, state.canvas.height.value)
+  state.drawing.ctx.clearRect(0, 0, state.canvas.width.value, state.canvas.height.value)
+
   // 绘制图片
   state.canvas.ctx.save()
-  // 移动到图片中心点
   state.canvas.ctx.translate(
     state.image.x + (state.image.element.width * state.image.scale) / 2,
     state.image.y + (state.image.element.height * state.image.scale) / 2
   )
-  // 应用缩放
   state.canvas.ctx.scale(state.image.scale, state.image.scale)
-  // 绘制图片，注意从中心点偏移
   state.canvas.ctx.drawImage(state.image.element, -state.image.element.width / 2, -state.image.element.height / 2)
   state.canvas.ctx.restore()
+
+  // 如果有绘制内容，重新绘制并应用相同的变换
+  if (state.drawing.imageData) {
+    // 创建临时画布存储原始尺寸的绘制内容
+    const tempCanvas = document.createElement('canvas')
+    tempCanvas.width = state.image.element.width
+    tempCanvas.height = state.image.element.height
+    const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true })
+    tempCtx.putImageData(state.drawing.imageData, 0, 0)
+
+    // 应用与图片相同的变换绘制到绘图层
+    state.drawing.ctx.save()
+    state.drawing.ctx.setTransform(
+      state.image.scale,
+      0,
+      0,
+      state.image.scale,
+      state.image.x + (state.image.element.width * state.image.scale) / 2,
+      state.image.y + (state.image.element.height * state.image.scale) / 2
+    )
+    state.drawing.ctx.drawImage(tempCanvas, -state.image.element.width / 2, -state.image.element.height / 2)
+    state.drawing.ctx.restore()
+  }
 }
 
 /**
@@ -207,7 +231,7 @@ function dragImage(event) {
   state.image.y += deltaY
   state.image.lastMouseX = event.clientX
   state.image.lastMouseY = event.clientY
-  drawImage()
+  drawImageAndLine()
 }
 
 /**
@@ -231,7 +255,7 @@ function handleZoom(type) {
   state.image.scale = Math.max(0.1, Math.min(5, state.image.scale))
 
   // 重新绘制
-  drawImage()
+  drawImageAndLine()
 }
 
 /**
@@ -339,7 +363,7 @@ function setAspectRatio(ratio) {
 
   nextTick(() => {
     adjustImagePosition()
-    drawImage()
+    drawImageAndLine()
   })
 }
 
@@ -353,59 +377,68 @@ function setTool(tool) {
 
 /**
  * @description: 处理鼠标按下事件，根据当前工具执行相应操作
- * @param {MouseEvent} event - 鼠标事件对象
  */
 function handleMouseDown(event) {
   if (currentTool.value === 'move') {
     startDragImage(event)
   } else if (currentTool.value === 'draw') {
-    state.drawing.isDrawing = true
     const rect = drawingCanvasRef.value.getBoundingClientRect()
-    const scaleX = drawingCanvasRef.value.width / rect.width
-    const scaleY = drawingCanvasRef.value.height / rect.height
 
-    state.drawing.lastX = (event.clientX - rect.left) * scaleX
-    state.drawing.lastY = (event.clientY - rect.top) * scaleY
+    // 计算鼠标相对于画布的实际位置
+    const mouseX = (event.clientX - rect.left) * (drawingCanvasRef.value.width / rect.width)
+    const mouseY = (event.clientY - rect.top) * (drawingCanvasRef.value.height / rect.height)
 
-    //重新定义画笔
-    state.drawing.ctx.globalCompositeOperation = 'source-over'
-    state.drawing.ctx.strokeStyle = '#FF0000'
-    state.drawing.ctx.fillStyle = '#FF0000'
-    state.drawing.ctx.lineWidth = 30
-    state.drawing.ctx.lineCap = 'round'
-    state.drawing.ctx.lineJoin = 'round'
-    state.drawing.ctx.globalAlpha = 1
-    state.drawing.ctx.imageSmoothingEnabled = true
-    state.drawing.ctx.imageSmoothingQuality = 'high'
+    // 转换为相对于图片的坐标
+    const x = (mouseX - state.image.x) / state.image.scale
+    const y = (mouseY - state.image.y) / state.image.scale
 
-    state.drawing.ctx.beginPath()
-    state.drawing.ctx.moveTo(state.drawing.lastX, state.drawing.lastY)
+    // 检查是否在图片范围内
+    if (x >= 0 && x <= state.image.element.width && y >= 0 && y <= state.image.element.height) {
+      state.drawing.isDrawing = true
+      state.drawing.lastX = x
+      state.drawing.lastY = y
+
+      // 设置绘图上下文状态
+      state.drawing.ctx.save()
+      state.drawing.ctx.setTransform(state.image.scale, 0, 0, state.image.scale, state.image.x, state.image.y)
+      state.drawing.ctx.globalCompositeOperation = 'source-over'
+      state.drawing.ctx.strokeStyle = '#e6e6e6'
+      state.drawing.ctx.fillStyle = '#e6e6e6'
+      state.drawing.ctx.lineWidth = 30 / state.image.scale
+      state.drawing.ctx.lineCap = 'round'
+      state.drawing.ctx.lineJoin = 'round'
+      state.drawing.ctx.globalAlpha = 1
+
+      state.drawing.ctx.beginPath()
+      state.drawing.ctx.moveTo(x, y)
+    }
   }
 }
 
 /**
- * @description: 处理鼠标移动事件，根据当前工具执行相应操作
- * @param {MouseEvent} event - 鼠标事件对象
+ * @description: 处理鼠标移动事件
  */
 function handleMouseMove(event) {
   if (currentTool.value === 'move' && state.image.isDragging) {
     dragImage(event)
   } else if (currentTool.value === 'draw' && state.drawing.isDrawing) {
     const rect = drawingCanvasRef.value.getBoundingClientRect()
-    const scaleX = drawingCanvasRef.value.width / rect.width
-    const scaleY = drawingCanvasRef.value.height / rect.height
 
-    const x = (event.clientX - rect.left) * scaleX
-    const y = (event.clientY - rect.top) * scaleY
+    // 计算鼠标相对于画布的实际位置
+    const mouseX = (event.clientX - rect.left) * (drawingCanvasRef.value.width / rect.width)
+    const mouseY = (event.clientY - rect.top) * (drawingCanvasRef.value.height / rect.height)
 
-    state.drawing.ctx.lineTo(x, y)
-    state.drawing.ctx.stroke()
+    // 转换为相对于图片的坐标
+    const x = (mouseX - state.image.x) / state.image.scale
+    const y = (mouseY - state.image.y) / state.image.scale
 
-    state.drawing.ctx.beginPath()
-    state.drawing.ctx.moveTo(x, y)
-
-    state.drawing.lastX = x
-    state.drawing.lastY = y
+    // 检查是否在图片范围内
+    if (x >= 0 && x <= state.image.element.width && y >= 0 && y <= state.image.element.height) {
+      state.drawing.ctx.lineTo(x, y)
+      state.drawing.ctx.stroke()
+      state.drawing.ctx.beginPath()
+      state.drawing.ctx.moveTo(x, y)
+    }
   }
 }
 
@@ -417,7 +450,30 @@ function handleMouseUp() {
     stopDragImage()
   } else if (currentTool.value === 'draw') {
     state.drawing.isDrawing = false
+    state.drawing.ctx.restore()
     state.drawing.ctx.beginPath()
+
+    // 创建临时画布来存储当前绘制内容，使用图片原始尺寸
+    const tempCanvas = document.createElement('canvas')
+    tempCanvas.width = state.image.element.width
+    tempCanvas.height = state.image.element.height
+    const tempCtx = tempCanvas.getContext('2d')
+
+    // 将当前绘制内容转换回原始尺寸
+    tempCtx.drawImage(
+      drawingCanvasRef.value,
+      state.image.x,
+      state.image.y,
+      state.image.element.width * state.image.scale,
+      state.image.element.height * state.image.scale,
+      0,
+      0,
+      state.image.element.width,
+      state.image.element.height
+    )
+
+    // 保存绘制的内容（使用原始尺寸）
+    state.drawing.imageData = tempCtx.getImageData(0, 0, state.image.element.width, state.image.element.height)
   }
 }
 
@@ -435,6 +491,7 @@ function initDrawingCanvas() {
 function clearDrawingLayer() {
   if (!drawingCanvasRef.value) return
   state.drawing.ctx.clearRect(0, 0, state.canvas.width.value, state.canvas.height.value)
+  state.drawing.imageData = null
 }
 
 // 分离导出函数
@@ -449,11 +506,34 @@ function exportOriginalLayer() {
 
 /**
  * @description: 导出涂色图层
- * @returns {string} 涂色图层的base64编码
  */
 function exportDrawingLayer() {
   if (!drawingCanvasRef.value) return ''
-  return drawingCanvasRef.value.toDataURL('image/png')
+
+  // 创建临时画布，大小与原始图片一致
+  const tempCanvas = document.createElement('canvas')
+  tempCanvas.width = state.image.element.width
+  tempCanvas.height = state.image.element.height
+  const tempCtx = tempCanvas.getContext('2d')
+
+  // 设置黑色背景
+  tempCtx.fillStyle = '#000000'
+  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+
+  // 将绘制内容缩放到原始图片大小
+  tempCtx.drawImage(
+    drawingCanvasRef.value,
+    state.image.x,
+    state.image.y,
+    state.image.element.width * state.image.scale,
+    state.image.element.height * state.image.scale,
+    0,
+    0,
+    state.image.element.width,
+    state.image.element.height
+  )
+
+  return tempCanvas.toDataURL('image/png')
 }
 
 /**
@@ -486,7 +566,7 @@ watch([state.canvas.width, state.canvas.height], () => {
   nextTick(() => {
     // 只调整边界，不改变图片位置
     adjustImagePosition()
-    drawImage()
+    drawImageAndLine()
   })
 })
 
