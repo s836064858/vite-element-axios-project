@@ -472,6 +472,32 @@ function exportDrawingLayer() {
   return drawingCanvasRef.value.toDataURL('image/png')
 }
 
+/**
+ * @description: 获取画布和图片的详细信息
+ */
+function getCanvasInfo() {
+  return {
+    canvas: {
+      width: canvasWidth.value,
+      height: canvasHeight.value,
+    },
+    image: {
+      // 实际显示尺寸
+      width: image.width * imageScale,
+      height: image.height * imageScale,
+      // 位置信息
+      x: imageX,
+      y: imageY,
+      // 变换信息
+      scale: imageScale,
+      rotation: rotationAngle,
+      // 原始尺寸
+      naturalWidth: image.width,
+      naturalHeight: image.height,
+    },
+  }
+}
+
 // Watchers
 watch([canvasWidth, canvasHeight], () => {
   emit('update:width', canvasWidth.value)
@@ -508,7 +534,8 @@ onUnmounted(() => {
 defineExpose({
   exportOriginalLayer,
   exportDrawingLayer,
-  clearDrawingLayer, // 暴露清除方法给父组件
+  clearDrawingLayer,
+  getCanvasInfo,
 })
 </script>
 
