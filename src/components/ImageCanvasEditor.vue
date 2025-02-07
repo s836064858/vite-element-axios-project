@@ -13,10 +13,6 @@
           <button class="control-btn" @click="handleZoom('out')" title="缩小">-</button>
         </div>
         <div class="button-group">
-          <button class="control-btn" @click="handleRotate('left')" title="逆时针旋转90度">↺</button>
-          <button class="control-btn" @click="handleRotate('right')" title="顺时针旋转90度">↻</button>
-        </div>
-        <div class="button-group">
           <button class="control-btn aspect-btn" @click="setAspectRatio('16:9')" title="16:9">16:9</button>
           <button class="control-btn aspect-btn" @click="setAspectRatio('4:3')" title="4:3">4:3</button>
         </div>
@@ -107,7 +103,6 @@ const state = {
     x: 0,
     y: 0,
     scale: 1,
-    rotation: 0,
     isDragging: false,
     lastMouseX: 0,
     lastMouseY: 0,
@@ -185,8 +180,6 @@ function drawImage() {
     state.image.x + (state.image.element.width * state.image.scale) / 2,
     state.image.y + (state.image.element.height * state.image.scale) / 2
   )
-  // 应用旋转
-  state.canvas.ctx.rotate((state.image.rotation * Math.PI) / 180)
   // 应用缩放
   state.canvas.ctx.scale(state.image.scale, state.image.scale)
   // 绘制图片，注意从中心点偏移
@@ -239,19 +232,6 @@ function handleZoom(type) {
   // 限制缩放范围
   state.image.scale = Math.max(0.1, Math.min(5, state.image.scale))
 
-  // 重新绘制
-  drawImage()
-}
-
-/**
- * @description: 处理图片旋转
- * @param {'left' | 'right'} direction - 旋转方向，'left'表示逆时针，'right'表示顺时针
- */
-function handleRotate(direction) {
-  // 更新旋转角度
-  state.image.rotation += direction === 'right' ? 90 : -90
-  // 标准化角度到0-360范围
-  state.image.rotation = ((state.image.rotation % 360) + 360) % 360
   // 重新绘制
   drawImage()
 }
@@ -496,7 +476,6 @@ function getCanvasInfo() {
       y: state.image.y,
       // 变换信息
       scale: state.image.scale,
-      rotation: state.image.rotation,
       // 原始尺寸
       naturalWidth: state.image.element.width,
       naturalHeight: state.image.element.height,
