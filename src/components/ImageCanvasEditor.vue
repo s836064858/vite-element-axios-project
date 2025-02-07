@@ -79,8 +79,6 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:width', 'update:height'])
-
 // Canvas refs
 const canvasRef = ref(null)
 const drawingCanvasRef = ref(null)
@@ -485,9 +483,6 @@ function getCanvasInfo() {
 
 // Watchers
 watch([state.canvas.width, state.canvas.height], () => {
-  emit('update:width', state.canvas.width.value)
-  emit('update:height', state.canvas.height.value)
-
   nextTick(() => {
     // 只调整边界，不改变图片位置
     adjustImagePosition()
@@ -517,7 +512,6 @@ onUnmounted(() => {
 defineExpose({
   exportOriginalLayer,
   exportDrawingLayer,
-  clearDrawingLayer,
   getCanvasInfo,
 })
 </script>

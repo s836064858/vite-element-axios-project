@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-12-16 09:18:47
- * @LastEditTime: 2025-02-07 10:11:48
+ * @LastEditTime: 2025-02-07 15:45:13
  * @LastEditors: 荛子
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /vite-element-axios-project/src/views/Home.vue
@@ -97,7 +97,7 @@ import univerExcel from '@components/univerExcel.vue'
 
 <template>
   <div class="editor-container">
-    <image-canvas-editor ref="editorRef" :src="imageUrl" :width="400" :height="300" @update:width="handleWidthChange" @update:height="handleHeightChange" />
+    <image-canvas-editor ref="editorRef" :src="imageUrl" :width="400" :height="300" />
     <div class="button-container">
       <button @click="handleExport">导出图片</button>
       <button @click="handleGetInfo">获取图片位置</button>
@@ -111,14 +111,6 @@ import ImageCanvasEditor from '@components/ImageCanvasEditor.vue'
 
 const imageUrl = ref('https://picsum.photos/800/600')
 const editorRef = ref(null)
-
-const handleWidthChange = (width) => {
-  console.log('Canvas width changed:', width)
-}
-
-const handleHeightChange = (height) => {
-  console.log('Canvas height changed:', height)
-}
 
 const handleExport = () => {
   if (!editorRef.value) return
@@ -147,23 +139,6 @@ const handleGetInfo = () => {
 
   const info = editorRef.value.getCanvasInfo()
   console.log('Canvas Info:', info)
-  // 输出示例：
-  // {
-  //   canvas: {
-  //     width: 800,
-  //     height: 600
-  //   },
-  //   image: {
-  //     width: 600,  // 实际显示宽度
-  //     height: 450, // 实际显示高度
-  //     x: 100,      // 图片在画布中的X坐标
-  //     y: 75,       // 图片在画布中的Y坐标
-  //     scale: 0.75, // 缩放比例
-  //     rotation: 0, // 旋转角度
-  //     naturalWidth: 800,  // 原始宽度
-  //     naturalHeight: 600  // 原始高度
-  //   }
-  // }
 }
 </script>
 
